@@ -170,7 +170,9 @@ jobs:
           merge-multiple: true
 
       - name: Generate checksums
-        run: sha256sum release/* > release/SHA256SUMS
+        run: |
+          cd release
+          sha256sum TunnelDeck-* > SHA256SUMS
 
       - name: Publish release
         env:
