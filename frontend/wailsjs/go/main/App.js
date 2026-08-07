@@ -6,6 +6,10 @@ export function Bootstrap() {
   return window['go']['main']['App']['Bootstrap']();
 }
 
+export function BrowserURL(arg1) {
+  return window['go']['main']['App']['BrowserURL'](arg1);
+}
+
 export function BuildSSHCommand(arg1) {
   return window['go']['main']['App']['BuildSSHCommand'](arg1);
 }
@@ -20,6 +24,10 @@ export function DeleteProfile(arg1) {
 
 export function ExportSafeConfig() {
   return window['go']['main']['App']['ExportSafeConfig']();
+}
+
+export function OpenProfileInBrowser(arg1) {
+  return window['go']['main']['App']['OpenProfileInBrowser'](arg1);
 }
 
 export function ParseSSHCommand(arg1) {

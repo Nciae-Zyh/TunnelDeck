@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import {
   Bootstrap, CopyText, DeleteProfile, ParseSSHCommand, PickPrivateKey,
-  SaveProfile, StartTunnel, StopTunnel, TrustHost,
+  OpenProfileInBrowser, SaveProfile, StartTunnel, StopTunnel, TrustHost,
 } from '../wailsjs/go/main/App'
 import { EventsOff, EventsOn } from '../wailsjs/runtime/runtime'
 import { main } from '../wailsjs/go/models'
@@ -24,6 +24,8 @@ interface TunnelProfile {
   privateKeyPath: string
   rememberSecret: boolean
   autoReconnect: boolean
+  webService: boolean
+  webScheme: 'http' | 'https'
   createdAt: string
   updatedAt: string
 }
@@ -39,6 +41,7 @@ interface TunnelStatus {
   activeConnections: number
   connectedAt?: string
   hostKey?: HostKeyInfo
+  url?: string
 }
 interface OperationResult {
   ok: boolean
@@ -67,6 +70,7 @@ function blankProfile(): TunnelProfile {
     id: '', name: '新建隧道', sshHost: '', sshPort: 22, username: 'root',
     localBind: '127.0.0.1', localPort: 9108, remoteHost: '127.0.0.1', remotePort: 9108,
     authMode: 'password', privateKeyPath: '', rememberSecret: false, autoReconnect: true,
+    webService: false, webScheme: 'http',
     createdAt: '', updatedAt: '',
   }
 }
@@ -192,6 +196,15 @@ async function stopCurrent() {
     notify(String(error), 'error')
   } finally {
     busy.value = false
+  }
+}
+async function openCurrentInBrowser() {
+  if (!draft.id || currentStatus.value.state !== 'running' || !draft.webService) return
+  try {
+    const result = await OpenProfileInBrowser(draft.id) as OperationResult
+    notify(result.message || '已使用默认浏览器打开', result.ok ? 'success' : 'error')
+  } catch (error) {
+    notify(String(error), 'error')
   }
 }
 async function trustAndConnect() {
@@ -323,6 +336,10 @@ onBeforeUnmount(() => {
       <header class="workspace-header">
         <div><p class="eyebrow">LOCAL FORWARD / SSH</p><h1>{{ draft.name || '未命名隧道' }}</h1></div>
         <div class="header-actions">
+          <button
+            v-if="currentStatus.state === 'running' && draft.webService"
+            class="button ghost" type="button" :disabled="busy" @click="openCurrentInBrowser"
+          >打开网页 ↗</button>
           <button class="button ghost" type="button" :disabled="busy || isRunning" @click="saveCurrent">保存配置</button>
           <button v-if="!isRunning" class="button primary" type="button" :disabled="busy" @click="startCurrent"><span class="play" aria-hidden="true">▶</span> 保存并启动</button>
           <button v-else class="button danger" type="button" :disabled="busy" @click="stopCurrent">■ 停止隧道</button>
@@ -425,8 +442,26 @@ onBeforeUnmount(() => {
           </div>
         </section>
 
+        <section class="panel web-panel">
+          <div class="panel-heading"><span class="step">05</span><div><h2>网页快捷入口</h2><p>仅在用户点击后打开，不会自动跳转</p></div></div>
+          <div class="web-controls">
+            <label class="toggle-row">
+              <input v-model="draft.webService" :disabled="isRunning" type="checkbox">
+              <span class="toggle"></span>
+              <span><strong>这是网页服务</strong><small>启用后，连接成功时显示“打开网页”按钮</small></span>
+            </label>
+            <label v-if="draft.webService" class="field scheme-field">
+              <span>网页协议</span>
+              <select v-model="draft.webScheme" :disabled="isRunning">
+                <option value="http">HTTP</option>
+                <option value="https">HTTPS</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
         <section class="panel command-panel">
-          <div class="panel-heading"><span class="step">05</span><div><h2>等价命令</h2><p>用于核对配置，不会包含密码</p></div></div>
+          <div class="panel-heading"><span class="step">06</span><div><h2>等价命令</h2><p>用于核对配置，不会包含密码</p></div></div>
           <div class="command-box">
             <code>{{ commandPreview }}</code>
             <button type="button" aria-label="复制等价命令" title="复制" @click="copyCommand">复制</button>
