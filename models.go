@@ -26,6 +26,8 @@ type TunnelProfile struct {
 	PrivateKeyPath string `json:"privateKeyPath,omitempty"`
 	RememberSecret bool   `json:"rememberSecret"`
 	AutoReconnect  bool   `json:"autoReconnect"`
+	WebService     bool   `json:"webService"`
+	WebScheme      string `json:"webScheme,omitempty"`
 	CreatedAt      string `json:"createdAt"`
 	UpdatedAt      string `json:"updatedAt"`
 }
@@ -70,6 +72,7 @@ type OperationResult struct {
 	Profile *TunnelProfile `json:"profile,omitempty"`
 	Status  *TunnelStatus  `json:"status,omitempty"`
 	HostKey *HostKeyInfo   `json:"hostKey,omitempty"`
+	URL     string         `json:"url,omitempty"`
 }
 
 type BootstrapData struct {
@@ -102,6 +105,9 @@ func (p *TunnelProfile) applyDefaults() {
 	}
 	if p.Name == "" && p.SSHHost != "" {
 		p.Name = p.SSHHost
+	}
+	if p.WebService && p.WebScheme == "" {
+		p.WebScheme = "http"
 	}
 }
 
@@ -137,6 +143,9 @@ func validateProfile(p TunnelProfile) error {
 	if p.AuthMode == AuthPrivateKey && strings.TrimSpace(p.PrivateKeyPath) == "" {
 		return fmt.Errorf("私钥认证需要选择私钥文件")
 	}
+	if p.WebService && p.WebScheme != "http" && p.WebScheme != "https" {
+		return fmt.Errorf("网页协议只能是 http 或 https")
+	}
 	return nil
 }
 
@@ -168,6 +177,27 @@ func (p TunnelProfile) localEndpoint() string {
 
 func (p TunnelProfile) remoteEndpoint() string {
 	return net.JoinHostPort(p.RemoteHost, fmt.Sprintf("%d", p.RemotePort))
+}
+
+func (p TunnelProfile) browserURL() (string, error) {
+	if !p.WebService {
+		return "", fmt.Errorf("这个配置未标记为网页服务")
+	}
+	scheme := p.WebScheme
+	if scheme == "" {
+		scheme = "http"
+	}
+	if scheme != "http" && scheme != "https" {
+		return "", fmt.Errorf("网页协议只能是 http 或 https")
+	}
+	host := p.LocalBind
+	switch host {
+	case "0.0.0.0":
+		host = "127.0.0.1"
+	case "::":
+		host = "::1"
+	}
+	return scheme + "://" + net.JoinHostPort(host, fmt.Sprintf("%d", p.LocalPort)) + "/", nil
 }
 
 func stoppedStatus(p TunnelProfile) TunnelStatus {

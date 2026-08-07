@@ -2,6 +2,8 @@ package main
 
 import (
 	"embed"
+	"fmt"
+	"os"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -12,6 +14,14 @@ import (
 var assets embed.FS
 
 func main() {
+	if isNativeMessagingLaunch(os.Args) {
+		if err := runNativeMessagingHost(os.Stdin, os.Stdout); err != nil {
+			fmt.Fprintln(os.Stderr, "TunnelDeck native host:", err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	// Create an instance of the app structure
 	app := NewApp()
 
@@ -34,6 +44,6 @@ func main() {
 	})
 
 	if err != nil {
-		println("Error:", err.Error())
+		fmt.Fprintln(os.Stderr, "TunnelDeck:", err)
 	}
 }

@@ -36,10 +36,14 @@ func NewApp() *App {
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	a.initializeManager(func(status TunnelStatus) {
+		runtime.EventsEmit(a.ctx, "tunnel:status", status)
+	})
+}
+
+func (a *App) initializeManager(emit func(TunnelStatus)) {
 	if a.store != nil {
-		a.manager = NewTunnelManager(a.store.knownHostsPath, func(status TunnelStatus) {
-			runtime.EventsEmit(a.ctx, "tunnel:status", status)
-		})
+		a.manager = NewTunnelManager(a.store.knownHostsPath, emit)
 	}
 }
 
@@ -194,6 +198,34 @@ func (a *App) StopTunnel(profileID string) OperationResult {
 		return failedResult("MANAGER_UNAVAILABLE", "隧道管理器尚未初始化")
 	}
 	return a.manager.Stop(profile)
+}
+
+func (a *App) BrowserURL(profileID string) OperationResult {
+	profile, ok := a.findProfile(profileID)
+	if !ok {
+		return failedResult("NOT_FOUND", "配置不存在")
+	}
+	if a.manager == nil || !a.manager.IsRunning(profileID) {
+		return failedResult("TUNNEL_NOT_RUNNING", "请先启动隧道")
+	}
+	target, err := profile.browserURL()
+	if err != nil {
+		return failedResult("NOT_A_WEB_SERVICE", err.Error())
+	}
+	return OperationResult{OK: true, Message: "网页地址已就绪", URL: target}
+}
+
+func (a *App) OpenProfileInBrowser(profileID string) OperationResult {
+	result := a.BrowserURL(profileID)
+	if !result.OK {
+		return result
+	}
+	if a.ctx == nil {
+		return failedResult("BROWSER_UNAVAILABLE", "当前运行模式不能直接打开浏览器")
+	}
+	runtime.BrowserOpenURL(a.ctx, result.URL)
+	result.Message = "已使用默认浏览器打开"
+	return result
 }
 
 func (a *App) TrustHost(profileID string) OperationResult {
