@@ -20,6 +20,8 @@ export function ParseSSHCommand(arg1:string):Promise<main.ParseCommandResult>;
 
 export function PickPrivateKey():Promise<main.OperationResult>;
 
+export function RegisterNativeHost(arg1:string):Promise<main.NativeHostRegistrationResult>;
+
 export function SaveProfile(arg1:main.SaveProfileRequest):Promise<main.OperationResult>;
 
 export function StartTunnel(arg1:main.StartTunnelRequest):Promise<main.OperationResult>;

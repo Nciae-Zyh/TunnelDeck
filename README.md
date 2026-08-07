@@ -24,7 +24,7 @@ ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com
 - 默认只监听 `127.0.0.1`；主动绑定 `0.0.0.0` 或 `::` 时显示暴露风险提示
 - 可将 HTTP/HTTPS 隧道标记为网页服务，连接后由用户主动点击打开
 - Chrome 侧边栏扩展，共用桌面端配置和系统钥匙串
-- macOS、Windows、Linux，支持 AMD64 与 ARM64
+- macOS Apple Silicon、Windows AMD64、Linux AMD64
 
 ## 为什么比较轻
 
@@ -67,6 +67,8 @@ ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com
 - 非网页端口不会自动打开，也不会显示快捷入口。
 
 开发构建、Native Host 注册和安全边界见 [Chrome 扩展文档](docs/CHROME_EXTENSION.md)。
+
+桌面端底部的“Chrome 浏览器集成”可以直接填写 Chrome 扩展 ID 并注册本机服务，不再需要手动运行脚本。请先把 macOS 应用移动到 `/Applications`，或在 Windows 上使用安装器完成固定路径安装，再执行注册；应用位置改变后需要重新注册。
 
 ## 凭据与配置
 
@@ -126,7 +128,9 @@ wails build -clean
 - Windows：`wails build -clean -platform windows/amd64`
 - Linux：安装 WebKitGTK 等发行版依赖后执行 `wails build -clean`
 
-每次 Push 和 Pull Request 都会自动执行安全扫描、测试和跨平台打包，构建产物可从对应的 GitHub Actions 运行页面下载。推送 `v*` Tag 后会自动创建带校验和的 GitHub Release。
+每次 Push 和 Pull Request 都会自动执行安全扫描、测试和跨平台打包，构建产物可从对应的 GitHub Actions 运行页面下载。Windows 同时生成用户级 NSIS 安装器与独立 EXE，macOS 当前生成 Apple Silicon 包。推送 `v*` Tag 后会自动创建带校验和的 GitHub Release。
+
+Chrome Web Store 发布、macOS 公证、Windows 签名和 Native Host 注册的完整关系见 [分发指南](docs/DISTRIBUTION.md)。
 
 ## 安全边界
 

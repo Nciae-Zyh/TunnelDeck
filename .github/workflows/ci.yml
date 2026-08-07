@@ -150,9 +150,13 @@ jobs:
           go install github.com/wailsapp/wails/v2/cmd/wails@v2.13.0
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
-      - name: Build application
-        if: runner.os != 'Linux'
+      - name: Build macOS application
+        if: runner.os == 'macOS'
         run: wails build -clean
+
+      - name: Build Windows application and installer
+        if: runner.os == 'Windows'
+        run: wails build -clean -nsis -installscope user
 
       - name: Build Linux application
         if: runner.os == 'Linux'
@@ -163,15 +167,17 @@ jobs:
         run: |
           mkdir -p dist
           ditto -c -k --sequesterRsrc --keepParent \
-            build/bin/TunnelDeck.app dist/TunnelDeck-macos-arm64.zip
+            build/bin/TunnelDeck.app "dist/TunnelDeck-${{ matrix.artifact }}.zip"
 
       - name: Package Windows application
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Compress-Archive -Path build/bin/TunnelDeck.exe `
-            -DestinationPath dist/TunnelDeck-windows-amd64.zip
+          Copy-Item build/bin/TunnelDeck.exe dist/TunnelDeck-windows-amd64.exe
+          $installer = Get-ChildItem build/bin/*-installer.exe | Select-Object -First 1
+          if (-not $installer) { throw 'NSIS installer was not generated' }
+          Copy-Item $installer.FullName dist/TunnelDeck-windows-amd64-installer.exe
 
       - name: Package Linux application
         if: runner.os == 'Linux'

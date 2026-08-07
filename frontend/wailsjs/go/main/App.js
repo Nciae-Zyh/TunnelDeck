@@ -38,6 +38,10 @@ export function PickPrivateKey() {
   return window['go']['main']['App']['PickPrivateKey']();
 }
 
+export function RegisterNativeHost(arg1) {
+  return window['go']['main']['App']['RegisterNativeHost'](arg1);
+}
+
 export function SaveProfile(arg1) {
   return window['go']['main']['App']['SaveProfile'](arg1);
 }

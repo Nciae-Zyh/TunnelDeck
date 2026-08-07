@@ -228,6 +228,11 @@ func (a *App) OpenProfileInBrowser(profileID string) OperationResult {
 	return result
 }
 
+func (a *App) RegisterNativeHost(extensionID string) NativeHostRegistrationResult {
+	extensionID = strings.TrimSpace(extensionID)
+	return registerNativeMessagingHost(extensionID)
+}
+
 func (a *App) TrustHost(profileID string) OperationResult {
 	profile, ok := a.findProfile(profileID)
 	if !ok {

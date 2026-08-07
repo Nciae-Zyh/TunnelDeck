@@ -108,6 +108,10 @@ SectionEnd
 Section "uninstall"
     !insertmacro wails.setShellContext
 
+    DeleteRegKey HKCU "Software\Google\Chrome\NativeMessagingHosts\com.tunneldeck.native"
+    Delete "$LOCALAPPDATA\TunnelDeck\NativeMessagingHosts\com.tunneldeck.native.json"
+    RMDir "$LOCALAPPDATA\TunnelDeck\NativeMessagingHosts"
+
     RMDir /r "$AppData\${PRODUCT_EXECUTABLE}" # Remove the WebView2 DataPath
 
     RMDir /r $INSTDIR

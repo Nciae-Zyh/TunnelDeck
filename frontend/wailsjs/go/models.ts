@@ -146,7 +146,29 @@ export namespace main {
 		    return a;
 		}
 	}
-	
+
+	export class NativeHostRegistrationResult {
+	    ok: boolean;
+	    code?: string;
+	    message?: string;
+	    extensionId?: string;
+	    manifestPath?: string;
+	    binaryPath?: string;
+
+	    static createFrom(source: any = {}) {
+	        return new NativeHostRegistrationResult(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ok = source["ok"];
+	        this.code = source["code"];
+	        this.message = source["message"];
+	        this.extensionId = source["extensionId"];
+	        this.manifestPath = source["manifestPath"];
+	        this.binaryPath = source["binaryPath"];
+	    }
+	}
 	export class TunnelProfile {
 	    id: string;
 	    name: string;
@@ -319,4 +341,3 @@ export namespace main {
 	
 
 }
-
