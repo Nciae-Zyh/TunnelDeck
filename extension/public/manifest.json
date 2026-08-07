@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "TunnelDeck",
+  "version": "0.1.0",
+  "description": "从 Chrome 侧边栏安全管理本机 TunnelDeck SSH 隧道。",
+  "permissions": [
+    "nativeMessaging",
+    "sidePanel"
+  ],
+  "action": {
+    "default_title": "打开 TunnelDeck"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  }
+}

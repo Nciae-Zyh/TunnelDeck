@@ -1,5 +1,6 @@
 build/bin
 node_modules
 frontend/dist
+extension/dist
 .DS_Store
 *.log
