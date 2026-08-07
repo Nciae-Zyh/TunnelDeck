@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TunnelDeck",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "minimum_chrome_version": "114",
   "description": "从 Chrome 侧边栏安全管理本机 TunnelDeck SSH 隧道。",
   "homepage_url": "https://github.com/Nciae-Zyh/TunnelDeck",

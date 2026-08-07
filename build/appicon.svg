@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title description">
+  <title id="title">TunnelDeck</title>
+  <desc id="description">A luminous tunnel crossed by a forward arrow, representing SSH port forwarding.</desc>
+  <defs>
+    <linearGradient id="surface" x1="128" y1="96" x2="896" y2="928" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#102630"/>
+      <stop offset="0.52" stop-color="#07141D"/>
+      <stop offset="1" stop-color="#050B12"/>
+    </linearGradient>
+    <linearGradient id="portal" x1="292" y1="248" x2="748" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#67E8F9"/>
+      <stop offset="0.48" stop-color="#5EEAD4"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="32" y="32" width="960" height="960" rx="224" fill="url(#surface)"/>
+  <rect x="43" y="43" width="938" height="938" rx="213" fill="none" stroke="#1F4852" stroke-width="22"/>
+
+  <path
+    d="M276 744V456c0-132 106-238 238-238s238 106 238 238v288"
+    fill="none"
+    stroke="url(#portal)"
+    stroke-width="72"
+    stroke-linecap="round"
+  />
+  <path
+    d="M390 744V470c0-69 55-124 124-124s124 55 124 124v274"
+    fill="none"
+    stroke="#1B5960"
+    stroke-width="44"
+    stroke-linecap="round"
+  />
+
+  <path d="M194 572H770" fill="none" stroke="#F8FAFC" stroke-width="64" stroke-linecap="round"/>
+  <path
+    d="M680 480l94 92-94 92"
+    fill="none"
+    stroke="#F8FAFC"
+    stroke-width="64"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="194" cy="572" r="22" fill="#5EEAD4"/>
+</svg>

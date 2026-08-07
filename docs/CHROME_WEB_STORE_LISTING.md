@@ -52,13 +52,13 @@
 2. 在 macOS/Linux 运行一行安装命令，并把商店项目 ID 传给 `--chrome-store-id`：
 
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh -s -- --chrome-store-id 商店扩展ID
+   curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh
    ```
 
 3. Windows PowerShell 使用：
 
    ```powershell
-   $env:TUNNELDECK_CHROME_STORE_ID='商店扩展ID'; irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.ps1 | iex
+   irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | iex
    ```
 
 4. 启动 TunnelDeck 桌面端，确认底部 Chrome 集成显示相同 ID；如未注册，填写 ID 并点击“注册 Chrome 服务”。
@@ -83,8 +83,8 @@
 
 首次在 Developer Dashboard 上传 ZIP 后，以商店实际分配的扩展 ID 为准：
 
-1. 不把开发者模式加载时的 ID `ipmjdganppehhljijcdndfjjmjjpalbp` 直接视为商店 ID；
-2. 把正式 ID 回填到 `install.sh` 与 `install.ps1` 的官方 ID 常量；
+1. 正式商店 ID 为 `jnfkjehpbkmfnidfcilehhkpbjjinmod`，不要使用开发者模式加载时的临时 ID；
+2. `install.sh`、`install.ps1` 与桌面端默认输入框已回填正式 ID；
 3. 使用正式 ID 重新测试 Native Host 的 `allowed_origins`；
 4. 如果需要让本地解压开发构建稳定复用正式 ID，再从商店安装包取得公开密钥并评估是否加入 manifest 的 `key` 字段；私钥不得进入仓库；
-5. 首次商店详情、隐私和分发配置完成后，再考虑通过 Chrome Web Store API V2 自动上传后续版本。
+5. 首次商店详情、隐私和分发配置完成后，后续 `v*` 标签通过 Chrome Web Store API V2 自动上传并提交审核。

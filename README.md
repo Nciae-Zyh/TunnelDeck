@@ -60,19 +60,19 @@ ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com
 当前阶段不提供未签名的桌面二进制或安装器。macOS/Linux 可以像 nvm 一样用一条命令检查依赖、下载固定源码标签并在本机完成构建：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh
 ```
 
 没有 `curl` 时可以使用 `wget`：
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh
+wget -qO- https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh
 ```
 
 Windows PowerShell 使用：
 
 ```powershell
-irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.ps1 | iex
+irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | iex
 ```
 
 安装器先报告操作系统、架构、下载与校验工具、Go、Node.js 和平台构建库。已有 Go 1.25+/Node.js 20+ 会直接复用；缺失时下载到 TunnelDeck 私有用户目录并校验官方 SHA-256，不修改全局 PATH。macOS 的 Xcode Command Line Tools、Linux 的 GTK3/WebKitGTK 4.1 和 Windows 的 WebView2 会在构建前检查。
@@ -80,7 +80,7 @@ irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.ps1 | 
 只检测、不安装：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh -s -- --check
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh -s -- --check
 ```
 
 脚本在用户电脑上构建桌面应用；从 Chrome Web Store 安装扩展后，将正式商店 ID 传给安装器即可同时注册 Native Messaging。完整依赖、手动审查方式、开发扩展加载和更新步骤见 [源码安装指南](docs/SOURCE_INSTALL.md)。

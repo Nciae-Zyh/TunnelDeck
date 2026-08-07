@@ -71,7 +71,8 @@ const toast = reactive({ visible: false, kind: 'success', message: '' })
 const importOpen = ref(false)
 const importCommand = ref('ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com')
 const configPath = ref('')
-const extensionId = ref('')
+const officialChromeExtensionId = 'jnfkjehpbkmfnidfcilehhkpbjjinmod'
+const extensionId = ref(officialChromeExtensionId)
 const nativeHostBusy = ref(false)
 const nativeHostRegistration = ref<NativeHostRegistrationResult | null>(null)
 let toastTimer: number | undefined
@@ -512,7 +513,7 @@ onBeforeUnmount(() => {
                 v-model.trim="extensionId"
                 maxlength="32"
                 pattern="[a-p]{32}"
-                placeholder="例如：ipmjdganppehhljijcdndfjjmjjpalbp"
+                :placeholder="officialChromeExtensionId"
                 autocomplete="off"
                 spellcheck="false"
               >

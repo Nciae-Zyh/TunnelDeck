@@ -2,18 +2,18 @@
 
 set -eu
 
-PROJECT_VERSION="${TUNNELDECK_VERSION:-v0.3.0}"
+PROJECT_VERSION="${TUNNELDECK_VERSION:-v0.3.1}"
 GO_VERSION="1.26.5"
 NODE_VERSION="22.23.2"
 REPOSITORY="Nciae-Zyh/TunnelDeck"
-OFFICIAL_CHROME_EXTENSION_ID=""
-OFFICIAL_CHROME_STORE_URL=""
+OFFICIAL_CHROME_EXTENSION_ID="jnfkjehpbkmfnidfcilehhkpbjjinmod"
+OFFICIAL_CHROME_STORE_URL="https://chromewebstore.google.com/detail/jnfkjehpbkmfnidfcilehhkpbjjinmod"
 
 assume_yes=0
 refresh_source=0
 check_only=0
 development_extension_id=""
-store_extension_id="$OFFICIAL_CHROME_EXTENSION_ID"
+store_extension_id=""
 install_dir=""
 
 usage() {
@@ -79,6 +79,10 @@ while [ "$#" -gt 0 ]; do
       ;;
   esac
 done
+
+if [ -z "$development_extension_id" ] && [ -z "$store_extension_id" ]; then
+  store_extension_id="$OFFICIAL_CHROME_EXTENSION_ID"
+fi
 
 if ! printf '%s' "$PROJECT_VERSION" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
   echo "Version must use the vX.Y.Z format." >&2

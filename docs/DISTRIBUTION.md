@@ -18,9 +18,18 @@
 2. 上传 `TunnelDeck-chrome-extension.zip`。
 3. 填写商店详情、单一用途、隐私、分发范围和测试说明。
 4. 明确说明扩展需要配套 TunnelDeck 桌面应用，并通过 Native Messaging 控制本机 SSH 隧道。
-5. 提交审核；如需自行控制上线时间，启用延迟发布。
+5. 首次版本在 Dashboard 提交审核，并使用审核通过后自动发布。
 
-首次上传需要在 Dashboard 手动完成商店详情、隐私、分发范围和测试说明。完成初次配置并取得正式扩展 ID 后，后续版本可再配置 Chrome Web Store API V2 自动上传；OAuth 客户端、刷新令牌等只能放入 GitHub Actions Secrets，不能提交仓库。
+首次上传需要在 Dashboard 手动完成商店详情、隐私、分发范围和测试说明。正式扩展 ID 为 `jnfkjehpbkmfnidfcilehhkpbjjinmod`。首次版本发布后，推送 `v*` 标签会使用 GitHub OIDC、Google Workload Identity Federation 和 Chrome Web Store API V2 自动上传并提交审核；仓库不保存长期 Google 密钥。
+
+自动发布使用 GitHub Environment `chrome-web-store-production`，需要以下 Environment Variables：
+
+- `CWS_EXTENSION_ID`：Chrome Web Store 正式扩展 ID；
+- `CWS_PUBLISHER_ID`：Developer Dashboard 的 Publisher ID；
+- `GCP_WIF_PROVIDER`：Google Workload Identity Provider 完整资源名；
+- `GCP_SERVICE_ACCOUNT`：已添加到 Chrome Web Store 发布者账号的服务账号邮箱。
+
+工作流只在推送 `v*` 标签时发布，并先验证标签版本与 ZIP 内 `manifest.json` 一致。发布脚本会先读取商店状态；同一版本已经发布或提交审核时会安全退出，重复运行不会再次上传。新版本使用 `DEFAULT_PUBLISH`、`skipReview: false` 和 `blockOnWarnings: true` 提交：仍须经过 Google 审核，审核通过后自动上线；存在验证警告时工作流会失败。GitHub `id-token: write` 只用于换取短期 Google 访问令牌，不需要把服务账号 JSON、OAuth Client Secret 或刷新令牌保存到 GitHub。
 
 建议的单一用途：`从 Chrome 侧边栏创建、启动和停止由本机 TunnelDeck 管理的 SSH 本地端口转发。`
 
@@ -33,7 +42,7 @@
 
 ### 正式扩展 ID
 
-Chrome Web Store 项目创建后会得到正式扩展 ID。用户安装桌面应用后，在 TunnelDeck 的“Chrome 浏览器集成”中粘贴该 ID 并点击“注册 Chrome 服务”。
+TunnelDeck 的正式 Chrome Web Store 扩展 ID 是 `jnfkjehpbkmfnidfcilehhkpbjjinmod`。源码安装器和桌面端会默认使用该 ID 注册本机服务；开发构建仍可以手动改成自己的扩展 ID。
 
 开发者模式加载的扩展 ID 可能与商店 ID 不同。ID 变化后必须重新注册，因为 Native Host 的 `allowed_origins` 不允许通配符。
 
@@ -119,4 +128,4 @@ HKCU\Software\Google\Chrome\NativeMessagingHosts\com.tunneldeck.native
 - `extension/package-lock.json`
 - `extension/public/manifest.json`
 
-推送 `v*` 标签后，Release 工作流会执行测试和三平台构建检查，只创建 GitHub 自动生成的源码归档与版本说明，不附加桌面可执行文件。独立的 `Chrome Web Store package` 工作流会生成扩展 ZIP 作为 14 天保留的工作流产物，供开发者下载并上传到商店；它不会在缺少正式项目 ID 和 OAuth 凭据时自行提交审核。
+推送 `v*` 标签后，Release 工作流会执行测试和三平台构建检查，只创建 GitHub 自动生成的源码归档与版本说明，不附加桌面可执行文件。独立的 `Chrome Web Store package` 工作流会生成扩展 ZIP、保存 14 天工作流产物，并在生产环境变量与 Google OIDC 联邦身份就绪后自动上传到 Chrome Web Store、提交审核；审核通过后按现有公开范围自动发布。

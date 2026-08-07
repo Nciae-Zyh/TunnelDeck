@@ -1,5 +1,5 @@
 param(
-  [string]$Version = $(if ($env:TUNNELDECK_VERSION) { $env:TUNNELDECK_VERSION } else { 'v0.3.0' }),
+  [string]$Version = $(if ($env:TUNNELDECK_VERSION) { $env:TUNNELDECK_VERSION } else { 'v0.3.1' }),
   [string]$ExtensionId = $env:TUNNELDECK_EXTENSION_ID,
   [string]$ChromeStoreId = $env:TUNNELDECK_CHROME_STORE_ID,
   [string]$InstallDirectory = $env:TUNNELDECK_INSTALL_DIR
@@ -11,12 +11,12 @@ $ProgressPreference = 'SilentlyContinue'
 $GoVersion = '1.26.5'
 $NodeVersion = '22.23.2'
 $Repository = 'Nciae-Zyh/TunnelDeck'
-$OfficialChromeExtensionId = ''
+$OfficialChromeExtensionId = 'jnfkjehpbkmfnidfcilehhkpbjjinmod'
 
 if ($Version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') {
   throw 'Version must use the vX.Y.Z format.'
 }
-if (-not $ChromeStoreId) {
+if (-not $ExtensionId -and -not $ChromeStoreId) {
   $ChromeStoreId = $OfficialChromeExtensionId
 }
 if ($ExtensionId -and $ChromeStoreId) {
