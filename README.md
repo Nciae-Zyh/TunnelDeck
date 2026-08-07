@@ -55,6 +55,29 @@ ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com
 
 这里的“远程目标地址”是从 SSH 服务器视角访问的地址。`127.0.0.1` 指 SSH 服务器自身，不是运行 TunnelDeck 的电脑。
 
+## 安装
+
+当前阶段不提供未签名的桌面二进制、安装器或扩展 ZIP。请从本仓库检出可信版本标签，然后运行源码安装脚本：
+
+```bash
+git clone https://github.com/Nciae-Zyh/TunnelDeck.git
+cd TunnelDeck
+git checkout v0.2.0
+./scripts/install-from-source.sh
+```
+
+Windows 使用 PowerShell：
+
+```powershell
+git clone https://github.com/Nciae-Zyh/TunnelDeck.git
+Set-Location TunnelDeck
+git checkout v0.2.0
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\install-from-source.ps1
+```
+
+脚本在用户电脑上构建桌面应用和 Chrome 扩展，再把桌面应用复制到固定的用户目录。完整依赖、安装、扩展加载和更新步骤见 [源码安装指南](docs/SOURCE_INSTALL.md)。
+
 ## Chrome 扩展
 
 仓库中的 `extension/` 是 Manifest V3 侧边栏扩展，支持创建、编辑、导入、启停连接以及确认 SSH 主机指纹。扩展通过 Native Messaging 控制本机 TunnelDeck，不能也不会在浏览器进程内建立 SSH 连接。
@@ -128,7 +151,7 @@ wails build -clean
 - Windows：`wails build -clean -platform windows/amd64`
 - Linux：安装 WebKitGTK 等发行版依赖后执行 `wails build -clean`
 
-每次 Push 和 Pull Request 都会自动执行安全扫描、测试和跨平台打包，构建产物可从对应的 GitHub Actions 运行页面下载。Windows 同时生成用户级 NSIS 安装器与独立 EXE，macOS 当前生成 Apple Silicon 包。推送 `v*` Tag 后会自动创建带校验和的 GitHub Release。
+每次 Push 和 Pull Request 都会自动执行安全扫描、测试和 macOS、Windows、Linux 构建检查，但不会上传未签名的构建产物。推送 `v*` Tag 后只创建源码 Release；用户使用源码安装脚本在自己的机器上构建。
 
 Chrome Web Store 发布、macOS 公证、Windows 签名和 Native Host 注册的完整关系见 [分发指南](docs/DISTRIBUTION.md)。
 

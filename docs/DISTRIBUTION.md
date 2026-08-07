@@ -1,8 +1,8 @@
 # TunnelDeck 分发指南
 
-本文只说明 TunnelDeck 与 Chrome 扩展的技术分发流程，不包含个人身份材料或开发者账号注册资料。
+本文只说明 TunnelDeck 与 Chrome 扩展的技术分发流程，不包含个人身份材料或开发者账号注册资料。当前采用源码分发：CI 验证构建，但不上传未签名应用、安装器或扩展 ZIP。实际安装见 [源码安装指南](SOURCE_INSTALL.md)。
 
-## 1. Chrome Web Store
+## 1. 未来发布 Chrome Web Store
 
 ### 准备扩展包
 
@@ -74,9 +74,9 @@ HKCU\Software\Google\Chrome\NativeMessagingHosts\com.tunneldeck.native
 
 仍可使用 `scripts/` 中的跨平台脚本进行自动化安装或卸载。
 
-## 3. macOS 可公开分发的条件
+## 3. macOS 二进制公开分发的未来条件
 
-GitHub Actions 当前构建 Apple Silicon 应用包，但未签名 ZIP 不能保证在所有用户的 Gatekeeper 策略下直接打开。公开分发应完成：
+当前 CI 只做 Apple Silicon 构建检查，不上传 `.app`。如未来公开分发二进制，应完成：
 
 1. 加入 Apple Developer Program，并获取 Developer ID Application 证书。
 2. 使用 Developer ID 对应用内所有可执行文件及 `.app` 签名，同时启用 Hardened Runtime 和安全时间戳。
@@ -86,9 +86,9 @@ GitHub Actions 当前构建 Apple Silicon 应用包，但未签名 ZIP 不能保
 
 签名证书和公证凭据只能放在 GitHub Actions Secrets 或专用密钥系统中，不能提交到仓库。
 
-## 4. Windows 可公开分发的条件
+## 4. Windows 二进制公开分发的未来条件
 
-Release 会生成用户级 NSIS 安装器，固定应用路径并包含 WebView2 安装检查。未签名 EXE/安装器仍可能被 SmartScreen 拦截。
+当前 CI 只做 Windows 构建检查，不上传 EXE 或 NSIS 安装器。源码安装脚本在用户电脑上本地编译并复制到固定路径。如未来公开分发二进制，未签名 EXE/安装器仍可能被 SmartScreen 拦截。
 
 公开分发可选择：
 
@@ -118,4 +118,4 @@ Release 会生成用户级 NSIS 安装器，固定应用路径并包含 WebView2
 - `extension/package-lock.json`
 - `extension/public/manifest.json`
 
-推送 `v*` 标签后，Release 工作流会执行测试，生成各平台应用、Chrome 扩展 ZIP、Native Host 工具包和 SHA-256 校验文件。
+推送 `v*` 标签后，Release 工作流会执行测试和三平台构建检查，只创建 GitHub 自动生成的源码归档与版本说明，不附加可执行文件或扩展包。

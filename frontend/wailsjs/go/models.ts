@@ -147,7 +147,7 @@ export namespace main {
 		}
 	}
 
-	export class NativeHostRegistrationResult {
+		export class NativeHostRegistrationResult {
 	    ok: boolean;
 	    code?: string;
 	    message?: string;
@@ -155,11 +155,11 @@ export namespace main {
 	    manifestPath?: string;
 	    binaryPath?: string;
 
-	    static createFrom(source: any = {}) {
+		    static createFrom(source: any = {}) {
 	        return new NativeHostRegistrationResult(source);
 	    }
 
-	    constructor(source: any = {}) {
+		    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.ok = source["ok"];
 	        this.code = source["code"];
