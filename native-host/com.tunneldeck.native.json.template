@@ -1,0 +1,9 @@
+{
+  "name": "com.tunneldeck.native",
+  "description": "TunnelDeck SSH tunnel controller",
+  "path": "__TUNNELDECK_BINARY__",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://__EXTENSION_ID__/"
+  ]
+}

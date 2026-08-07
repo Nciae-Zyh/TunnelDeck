@@ -42,7 +42,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: |
+            frontend/package-lock.json
+            extension/package-lock.json
 
       - name: Install Linux build dependencies
         run: |
@@ -57,6 +59,14 @@ jobs:
       - name: Build frontend
         run: npm run build
         working-directory: frontend
+
+      - name: Install extension dependencies
+        run: npm ci
+        working-directory: extension
+
+      - name: Build Chrome extension
+        run: npm run build
+        working-directory: extension
 
       - name: Scan Git history for secrets
         run: go run github.com/zricethezav/gitleaks/v8@v8.30.1 git --redact --no-banner .
@@ -156,9 +166,49 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+  package-extension:
+    name: Release Chrome extension
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Build Chrome extension
+        run: |
+          npm ci
+          npm run build
+        working-directory: extension
+
+      - name: Create release archives
+        run: |
+          mkdir -p dist
+          cd extension/dist
+          zip -r ../../dist/TunnelDeck-chrome-extension.zip .
+          cd ../..
+          zip -r dist/TunnelDeck-native-host-tools.zip \
+            scripts native-host docs/CHROME_EXTENSION.md
+
+      - name: Upload extension packages
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: TunnelDeck-chrome-extension
+          path: dist/*
+          if-no-files-found: error
+
   release:
     name: Publish GitHub Release
-    needs: package
+    needs: [package, package-extension]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

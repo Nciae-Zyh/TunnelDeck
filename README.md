@@ -22,6 +22,8 @@ ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com
 - 服务器主机密钥变化时阻止连接，避免静默接受中间人攻击
 - SSH keepalive、断线自动重连和 2–30 秒指数退避
 - 默认只监听 `127.0.0.1`；主动绑定 `0.0.0.0` 或 `::` 时显示暴露风险提示
+- 可将 HTTP/HTTPS 隧道标记为网页服务，连接后由用户主动点击打开
+- Chrome 侧边栏扩展，共用桌面端配置和系统钥匙串
 - macOS、Windows、Linux，支持 AMD64 与 ARM64
 
 ## 为什么比较轻
@@ -40,6 +42,8 @@ ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com
 6. 首次连接会显示服务器的 SHA256 指纹。通过可信渠道核对后，再点击“信任并连接”。
 7. 使用 `127.0.0.1:本地端口` 访问远程服务。
 
+如果目标是网页，可以启用“这是网页服务”并选择 HTTP 或 HTTPS。隧道运行后，桌面端会显示“打开网页”按钮；只有用户点击时才会调用系统默认浏览器。启动隧道、自动重连和启动应用都不会自动打开页面。
+
 上面的示例命令对应：
 
 | 项目 | 值 |
@@ -50,6 +54,19 @@ ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com
 | SSH 内目标 | `127.0.0.1:9108` |
 
 这里的“远程目标地址”是从 SSH 服务器视角访问的地址。`127.0.0.1` 指 SSH 服务器自身，不是运行 TunnelDeck 的电脑。
+
+## Chrome 扩展
+
+仓库中的 `extension/` 是 Manifest V3 侧边栏扩展，支持创建、编辑、导入、启停连接以及确认 SSH 主机指纹。扩展通过 Native Messaging 控制本机 TunnelDeck，不能也不会在浏览器进程内建立 SSH 连接。
+
+网页快捷入口遵循和桌面端相同的规则：
+
+- 配置必须显式标记为网页服务。
+- 隧道必须处于运行状态。
+- 用户必须点击“打开网页”。
+- 非网页端口不会自动打开，也不会显示快捷入口。
+
+开发构建、Native Host 注册和安全边界见 [Chrome 扩展文档](docs/CHROME_EXTENSION.md)。
 
 ## 凭据与配置
 
@@ -89,6 +106,7 @@ wails doctor
 
 ```bash
 npm --prefix frontend install
+npm --prefix extension install
 wails dev
 ```
 
@@ -98,6 +116,7 @@ wails dev
 go test -race ./...
 go vet ./...
 npm --prefix frontend run build
+npm --prefix extension run build
 wails build -clean
 ```
 
