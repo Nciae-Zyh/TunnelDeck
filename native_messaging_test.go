@@ -62,3 +62,26 @@ func TestNativeHostPing(t *testing.T) {
 		t.Fatalf("unexpected ping result: %#v", result)
 	}
 }
+
+func TestNativeMessagingHostPingRoundTrip(t *testing.T) {
+	var input bytes.Buffer
+	inputWriter := nativeWriter{output: &input}
+	if err := inputWriter.write(nativeRequest{ID: "ping-round-trip", Method: "ping"}); err != nil {
+		t.Fatal(err)
+	}
+	var output bytes.Buffer
+	if err := runNativeMessagingHostWithApp(&App{}, &input, &output); err != nil {
+		t.Fatal(err)
+	}
+	payload, err := readNativeMessage(&output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var response nativeResponse
+	if err := json.Unmarshal(payload, &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.ID != "ping-round-trip" || !response.OK {
+		t.Fatalf("unexpected round-trip response: %#v", response)
+	}
+}

@@ -65,8 +65,11 @@ func isNativeMessagingLaunch(args []string) bool {
 }
 
 func runNativeMessagingHost(input io.Reader, output io.Writer) error {
-	host := &nativeHost{writer: &nativeWriter{output: output}}
-	host.app = NewApp()
+	return runNativeMessagingHostWithApp(NewApp(), input, output)
+}
+
+func runNativeMessagingHostWithApp(app *App, input io.Reader, output io.Writer) error {
+	host := &nativeHost{app: app, writer: &nativeWriter{output: output}}
 	host.app.initializeManager(func(status TunnelStatus) {
 		_ = host.writer.write(nativeEvent{Event: "tunnel.status", Payload: status})
 	})
