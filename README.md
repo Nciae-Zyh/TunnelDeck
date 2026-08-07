@@ -57,26 +57,33 @@ ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com
 
 ## 安装
 
-当前阶段不提供未签名的桌面二进制、安装器或扩展 ZIP。请从本仓库检出可信版本标签，然后运行源码安装脚本：
+当前阶段不提供未签名的桌面二进制或安装器。macOS/Linux 可以像 nvm 一样用一条命令检查依赖、下载固定源码标签并在本机完成构建：
 
 ```bash
-git clone https://github.com/Nciae-Zyh/TunnelDeck.git
-cd TunnelDeck
-git checkout v0.2.0
-./scripts/install-from-source.sh
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh
 ```
 
-Windows 使用 PowerShell：
+没有 `curl` 时可以使用 `wget`：
+
+```bash
+wget -qO- https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh
+```
+
+Windows PowerShell 使用：
 
 ```powershell
-git clone https://github.com/Nciae-Zyh/TunnelDeck.git
-Set-Location TunnelDeck
-git checkout v0.2.0
-Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install-from-source.ps1
+irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.ps1 | iex
 ```
 
-脚本在用户电脑上构建桌面应用和 Chrome 扩展，再把桌面应用复制到固定的用户目录。完整依赖、安装、扩展加载和更新步骤见 [源码安装指南](docs/SOURCE_INSTALL.md)。
+安装器先报告操作系统、架构、下载与校验工具、Go、Node.js 和平台构建库。已有 Go 1.25+/Node.js 20+ 会直接复用；缺失时下载到 TunnelDeck 私有用户目录并校验官方 SHA-256，不修改全局 PATH。macOS 的 Xcode Command Line Tools、Linux 的 GTK3/WebKitGTK 4.1 和 Windows 的 WebView2 会在构建前检查。
+
+只检测、不安装：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh -s -- --check
+```
+
+脚本在用户电脑上构建桌面应用；从 Chrome Web Store 安装扩展后，将正式商店 ID 传给安装器即可同时注册 Native Messaging。完整依赖、手动审查方式、开发扩展加载和更新步骤见 [源码安装指南](docs/SOURCE_INSTALL.md)。
 
 ## Chrome 扩展
 
@@ -89,9 +96,9 @@ Set-ExecutionPolicy -Scope Process Bypass
 - 用户必须点击“打开网页”。
 - 非网页端口不会自动打开，也不会显示快捷入口。
 
-开发构建、Native Host 注册和安全边界见 [Chrome 扩展文档](docs/CHROME_EXTENSION.md)。
+开发构建、Native Host 注册和安全边界见 [Chrome 扩展文档](docs/CHROME_EXTENSION.md)。商店说明、权限理由、隐私表单口径和审核步骤见 [Chrome Web Store 上架资料](docs/CHROME_WEB_STORE_LISTING.md)。
 
-桌面端底部的“Chrome 浏览器集成”可以直接填写 Chrome 扩展 ID 并注册本机服务，不再需要手动运行脚本。请先把 macOS 应用移动到 `/Applications`，或在 Windows 上使用安装器完成固定路径安装，再执行注册；应用位置改变后需要重新注册。
+桌面端底部的“Chrome 浏览器集成”可以直接填写 Chrome 扩展 ID 并注册本机服务，不再需要手动运行脚本。请先通过源码安装器把应用放到固定位置，再执行注册；应用位置改变后需要重新注册。
 
 ## 凭据与配置
 
@@ -151,7 +158,7 @@ wails build -clean
 - Windows：`wails build -clean -platform windows/amd64`
 - Linux：安装 WebKitGTK 等发行版依赖后执行 `wails build -clean`
 
-每次 Push 和 Pull Request 都会自动执行安全扫描、测试和 macOS、Windows、Linux 构建检查，但不会上传未签名的构建产物。推送 `v*` Tag 后只创建源码 Release；用户使用源码安装脚本在自己的机器上构建。
+每次 Push 和 Pull Request 都会自动执行安全扫描、测试和 macOS、Windows、Linux 构建检查，但不会上传未签名的桌面构建产物。推送 `v*` Tag 后创建源码 Release，并在独立工作流中生成可提交 Chrome Web Store 的扩展 ZIP；用户仍在自己的机器上构建桌面端。
 
 Chrome Web Store 发布、macOS 公证、Windows 签名和 Native Host 注册的完整关系见 [分发指南](docs/DISTRIBUTION.md)。
 

@@ -60,13 +60,8 @@ jobs:
         run: npm run build
         working-directory: frontend
 
-      - name: Install extension dependencies
-        run: npm ci
-        working-directory: extension
-
-      - name: Build Chrome extension
-        run: npm run build
-        working-directory: extension
+      - name: Build and validate Chrome Web Store package
+        run: ./scripts/package-chrome-extension.sh
 
       - name: Scan Git history for secrets
         run: go run github.com/zricethezav/gitleaks/v8@v8.30.1 git --redact --no-banner .
@@ -80,9 +75,12 @@ jobs:
       - name: Validate shell installers
         run: |
           sh -n \
+            install.sh \
             scripts/install-from-source.sh \
             scripts/install-native-host.sh \
+            scripts/package-chrome-extension.sh \
             scripts/uninstall-native-host.sh
+          ./install.sh --check
 
   build:
     name: Build check (${{ matrix.platform }})
@@ -141,14 +139,16 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $tokens = $null
-          $errors = $null
-          [System.Management.Automation.Language.Parser]::ParseFile(
-            (Resolve-Path scripts/install-from-source.ps1),
-            [ref]$tokens,
-            [ref]$errors
-          ) | Out-Null
-          if ($errors.Count -gt 0) { throw ($errors | Out-String) }
+          foreach ($script in @('install.ps1', 'scripts/install-from-source.ps1')) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $script),
+              [ref]$tokens,
+              [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) { throw "$script`n$($errors | Out-String)" }
+          }
 
       - name: Build macOS application
         if: runner.os == 'macOS'

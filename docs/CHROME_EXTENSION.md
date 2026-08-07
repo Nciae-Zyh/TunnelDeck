@@ -34,7 +34,7 @@ flowchart LR
 
 ## 本地开发
 
-当前项目只提供源码安装方式，不发布未签名桌面二进制或扩展 ZIP。普通用户可直接参考 [源码安装指南](SOURCE_INSTALL.md)；以下步骤用于开发和手动验证。
+桌面端只提供源码安装方式，不发布未签名桌面二进制。扩展会生成可提交 Chrome Web Store 的审查 ZIP；以下步骤用于开发和手动验证。普通用户安装桌面端可直接参考 [源码安装指南](SOURCE_INSTALL.md)。
 
 构建桌面端前端和扩展：
 
@@ -111,6 +111,14 @@ Windows：
 ## 发布说明
 
 Chrome Web Store 首次创建项目后才会获得正式扩展 ID。发布正式安装包前，需要使用正式 ID 运行注册脚本或将其写入平台安装器。开发阶段的未打包扩展 ID 与商店 ID 可能不同。
+
+本地生成商店 ZIP：
+
+```bash
+./scripts/package-chrome-extension.sh
+```
+
+产物位于 `artifacts/chrome-web-store/`，ZIP 根目录直接包含 `manifest.json`。推送版本标签后，`Chrome Web Store package` 工作流也会生成同一结构的临时工作流产物。上架文案、隐私声明和审核测试步骤见 [Chrome Web Store 上架资料](CHROME_WEB_STORE_LISTING.md)。
 
 扩展只声明以下权限：
 

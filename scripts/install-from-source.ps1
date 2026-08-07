@@ -2,7 +2,9 @@ param(
   [ValidatePattern('^[a-p]{32}$')]
   [string]$ExtensionId = '',
 
-  [string]$InstallDirectory = "$env:LOCALAPPDATA\Programs\TunnelDeck"
+  [string]$InstallDirectory = "$env:LOCALAPPDATA\Programs\TunnelDeck",
+
+  [switch]$SkipExtensionBuild
 )
 
 $ErrorActionPreference = 'Stop'
@@ -20,11 +22,13 @@ try {
   & npm --prefix frontend ci
   if ($LASTEXITCODE -ne 0) { throw 'Desktop frontend dependency installation failed.' }
 
-  Write-Host 'Building the Chrome extension...'
-  & npm --prefix extension ci
-  if ($LASTEXITCODE -ne 0) { throw 'Chrome extension dependency installation failed.' }
-  & npm --prefix extension run build
-  if ($LASTEXITCODE -ne 0) { throw 'Chrome extension build failed.' }
+  if (-not $SkipExtensionBuild) {
+    Write-Host 'Building the Chrome extension...'
+    & npm --prefix extension ci
+    if ($LASTEXITCODE -ne 0) { throw 'Chrome extension dependency installation failed.' }
+    & npm --prefix extension run build
+    if ($LASTEXITCODE -ne 0) { throw 'Chrome extension build failed.' }
+  }
 
   Write-Host 'Building TunnelDeck for this Windows system...'
   & go run github.com/wailsapp/wails/v2/cmd/wails@v2.13.0 build -clean
@@ -55,10 +59,12 @@ try {
   Write-Host ''
   Write-Host 'TunnelDeck installed from locally built source.'
   Write-Host "Desktop application: $BinaryPath"
-  Write-Host "Chrome extension directory: $(Join-Path $RepositoryRoot 'extension\dist')"
+  if (-not $SkipExtensionBuild) {
+    Write-Host "Chrome extension directory: $(Join-Path $RepositoryRoot 'extension\dist')"
+  }
   if ($ExtensionId) {
     Write-Host "Chrome integration registered for: $ExtensionId"
-  } else {
+  } elseif (-not $SkipExtensionBuild) {
     Write-Host 'After loading extension\dist in chrome://extensions, enter its ID in TunnelDeck to register Chrome integration.'
   }
 } finally {

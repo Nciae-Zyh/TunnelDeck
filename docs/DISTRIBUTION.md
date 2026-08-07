@@ -1,19 +1,16 @@
 # TunnelDeck 分发指南
 
-本文只说明 TunnelDeck 与 Chrome 扩展的技术分发流程，不包含个人身份材料或开发者账号注册资料。当前采用源码分发：CI 验证构建，但不上传未签名应用、安装器或扩展 ZIP。实际安装见 [源码安装指南](SOURCE_INSTALL.md)。
+本文只说明 TunnelDeck 与 Chrome 扩展的技术分发流程，不包含个人身份材料或开发者账号注册资料。桌面端采用源码分发：CI 验证构建，但不上传未签名应用或桌面安装器。Chrome 扩展单独生成可提交商店的 ZIP。实际安装见 [源码安装指南](SOURCE_INSTALL.md)。
 
-## 1. 未来发布 Chrome Web Store
+## 1. 发布 Chrome Web Store
 
 ### 准备扩展包
 
 ```bash
-npm --prefix extension ci
-npm --prefix extension run build
-cd extension/dist
-zip -r ../../TunnelDeck-chrome-extension.zip .
+./scripts/package-chrome-extension.sh
 ```
 
-ZIP 根目录必须直接包含 `manifest.json`，不能再嵌套一层目录。每次上传的新版本必须高于商店现有版本。
+产物写入 `artifacts/chrome-web-store/`。脚本会核对 package/manifest 版本、拒绝密钥和 source map 等不应发布的文件，并确认 ZIP 根目录直接包含 `manifest.json`。每次上传的新版本必须高于商店现有版本。
 
 ### 发布步骤
 
@@ -22,6 +19,8 @@ ZIP 根目录必须直接包含 `manifest.json`，不能再嵌套一层目录。
 3. 填写商店详情、单一用途、隐私、分发范围和测试说明。
 4. 明确说明扩展需要配套 TunnelDeck 桌面应用，并通过 Native Messaging 控制本机 SSH 隧道。
 5. 提交审核；如需自行控制上线时间，启用延迟发布。
+
+首次上传需要在 Dashboard 手动完成商店详情、隐私、分发范围和测试说明。完成初次配置并取得正式扩展 ID 后，后续版本可再配置 Chrome Web Store API V2 自动上传；OAuth 客户端、刷新令牌等只能放入 GitHub Actions Secrets，不能提交仓库。
 
 建议的单一用途：`从 Chrome 侧边栏创建、启动和停止由本机 TunnelDeck 管理的 SSH 本地端口转发。`
 
@@ -44,7 +43,7 @@ Chrome Web Store 项目创建后会得到正式扩展 ID。用户安装桌面应
 
 ### macOS
 
-1. 将 `TunnelDeck.app` 移动到 `/Applications`。
+1. 使用源码安装器把 `TunnelDeck.app` 安装到固定位置，默认是 `~/Applications/TunnelDeck.app`。
 2. 启动应用，在“Chrome 浏览器集成”中填写扩展 ID。
 3. TunnelDeck 写入：
 
@@ -54,7 +53,7 @@ Chrome Web Store 项目创建后会得到正式扩展 ID。用户安装桌面应
 
 ### Windows
 
-1. 使用 `TunnelDeck-windows-amd64-installer.exe` 安装，不要长期从临时解压目录运行。
+1. 使用 PowerShell 源码安装器安装到固定位置，默认是 `%LOCALAPPDATA%\Programs\TunnelDeck\TunnelDeck.exe`。
 2. 启动应用，在“Chrome 浏览器集成”中填写扩展 ID。
 3. TunnelDeck 写入清单，并创建当前用户注册表项：
 
@@ -103,6 +102,8 @@ HKCU\Software\Google\Chrome\NativeMessagingHosts\com.tunneldeck.native
 
 - [Chrome Web Store：准备扩展](https://developer.chrome.com/docs/webstore/prepare)
 - [Chrome Web Store：发布扩展](https://developer.chrome.com/docs/webstore/publish)
+- [Chrome Web Store：更新扩展](https://developer.chrome.com/docs/webstore/update)
+- [Chrome Web Store API](https://developer.chrome.com/docs/webstore/using-api)
 - [Chrome Extensions：Native Messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging)
 - [Apple：Developer ID 与 Gatekeeper](https://developer.apple.com/developer-id/)
 - [Apple：公证 macOS 软件](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution)
@@ -118,4 +119,4 @@ HKCU\Software\Google\Chrome\NativeMessagingHosts\com.tunneldeck.native
 - `extension/package-lock.json`
 - `extension/public/manifest.json`
 
-推送 `v*` 标签后，Release 工作流会执行测试和三平台构建检查，只创建 GitHub 自动生成的源码归档与版本说明，不附加可执行文件或扩展包。
+推送 `v*` 标签后，Release 工作流会执行测试和三平台构建检查，只创建 GitHub 自动生成的源码归档与版本说明，不附加桌面可执行文件。独立的 `Chrome Web Store package` 工作流会生成扩展 ZIP 作为 14 天保留的工作流产物，供开发者下载并上传到商店；它不会在缺少正式项目 ID 和 OAuth 凭据时自行提交审核。

@@ -1,96 +1,145 @@
 # 从源码安装 TunnelDeck
 
-当前版本不提供未签名的桌面二进制、安装器或 Chrome 扩展 ZIP。CI 只验证各平台能够成功构建，不上传构建产物。用户在自己的机器上从公开源码构建并安装。
+TunnelDeck 当前不提供未签名的桌面二进制或桌面安装器。公开的一行安装命令会检查环境，从固定版本标签下载源码，并在用户电脑上构建和安装。Chrome 扩展可以单独提交 Chrome Web Store；开发者也可以继续加载本地构建目录。
 
-这种方式不等于第三方代码签名。安装前仍应检查仓库地址、版本标签、提交记录和脚本内容，不要运行来源不明的复制版脚本。
+这种方式不等于第三方代码签名。安装前仍应确认域名、仓库、版本标签和脚本内容，不要运行来源不明的复制版命令。希望先阅读脚本时，可以下载后再执行：
+
+```bash
+curl -fsSLo /tmp/tunneldeck-install.sh https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh
+less /tmp/tunneldeck-install.sh
+sh /tmp/tunneldeck-install.sh
+```
+
+## 自动依赖检查
+
+macOS/Linux 只检测、不修改系统：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh -s -- --check
+```
+
+Windows PowerShell 只检测：
+
+```powershell
+$env:TUNNELDECK_CHECK_ONLY='1'; irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.ps1 | iex
+Remove-Item Env:TUNNELDECK_CHECK_ONLY
+```
+
+安装器会报告：
+
+- 操作系统与 CPU 架构；
+- 下载工具与 SHA-256 校验工具；
+- Go 1.25+；
+- Node.js 20+ 和 npm；
+- macOS Xcode Command Line Tools、Linux GTK3/WebKitGTK 4.1 或 Windows WebView2。
+
+已有的合格 Go/Node 会直接复用。缺失时，安装器下载固定的 Go 1.26.5 和 Node.js 22.23.2 到 TunnelDeck 的用户数据目录，核对官方 SHA-256 后仅在当前安装进程使用，不写入用户或系统的全局 `PATH`。
 
 ## macOS
 
-支持当前机器的原生架构，包括 Apple Silicon 和 Intel。
-
-安装前置工具：
+支持 Apple Silicon 和 Intel。先确保已经安装 Xcode Command Line Tools；缺失时脚本会打开 Apple 安装提示，并要求完成后重新运行。
 
 ```bash
-xcode-select --install
-brew install go node git
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh
 ```
 
-克隆并安装：
+没有 `curl` 时：
+
+```bash
+wget -qO- https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh
+```
+
+桌面应用默认安装到 `~/Applications/TunnelDeck.app`。在 macOS 首次启动本机编译但未经 Apple 公证的应用时，仍可能需要在“隐私与安全性”中确认打开。
+
+## Linux
+
+支持 AMD64 和 ARM64。GTK3、WebKitGTK 4.1 和编译工具是系统依赖；缺失时安装器会提示确认，并支持 apt、dnf、pacman 和 zypper。无人值守环境只有显式加入 `--yes` 才会安装系统包：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh -s -- --yes
+```
+
+桌面程序默认安装到 `~/.local/bin/TunnelDeck`。如果该目录不在 `PATH`，可使用完整路径启动。
+
+## Windows
+
+支持 Windows AMD64/x64。PowerShell 安装器会检查 WebView2，并在用户目录放置缺失的 Go/Node 工具链：
+
+```powershell
+irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.ps1 | iex
+```
+
+桌面程序默认安装到 `%LOCALAPPDATA%\Programs\TunnelDeck\TunnelDeck.exe`，并为当前用户创建开始菜单快捷方式。如果没有 WebView2，脚本会停止并给出 Microsoft Evergreen Runtime 的安装地址，不会静默运行未校验的第三方安装程序。
+
+## 配合 Chrome Web Store
+
+Chrome Web Store 首次上传后，以 Developer Dashboard 分配的正式扩展 ID 为准。macOS/Linux 在安装桌面端时同时注册正式 ID：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh -s -- --chrome-store-id 你的正式商店扩展ID
+```
+
+Windows PowerShell：
+
+```powershell
+$env:TUNNELDECK_CHROME_STORE_ID='你的正式商店扩展ID'
+irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.ps1 | iex
+Remove-Item Env:TUNNELDECK_CHROME_STORE_ID
+```
+
+这会跳过本地扩展构建，只构建桌面端，并把 Native Messaging Host 的 `allowed_origins` 限制为该商店 ID。安装后重新加载或重新启动扩展即可。
+
+当前开发者模式 ID `ipmjdganppehhljijcdndfjjmjjpalbp` 不应自动当作商店 ID。正式 ID 回填到安装器之前，用户也可以在桌面端底部手动填写商店 ID 并点击“注册 Chrome 服务”。
+
+## 加载开发版扩展
+
+不使用 Chrome Web Store 时，一行安装器默认也会构建扩展。源码缓存目录为：
+
+- macOS/Linux：`${XDG_DATA_HOME:-$HOME/.local/share}/tunneldeck/src/v0.3.0/extension/dist`
+- Windows：`%LOCALAPPDATA%\TunnelDeck\Source\v0.3.0\extension\dist`
+
+然后：
+
+1. 在 `chrome://extensions` 开启开发者模式；
+2. 点击“加载已解压的扩展程序”，选择上面的 `extension/dist`；
+3. 复制 Chrome 显示的扩展 ID；
+4. 启动 TunnelDeck，在“Chrome 浏览器集成”中粘贴 ID 并注册；
+5. 重新加载 Chrome 扩展。
+
+已知开发版 ID 时，也可以一次完成构建和注册：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.0/install.sh | sh -s -- --extension-id 你的开发扩展ID
+```
+
+## 手动检出源码
+
+不希望使用一行入口时，可以完整检出标签后运行仓库内脚本：
 
 ```bash
 git clone https://github.com/Nciae-Zyh/TunnelDeck.git
 cd TunnelDeck
-git checkout v0.2.0
+git checkout v0.3.0
 ./scripts/install-from-source.sh
 ```
 
-应用默认安装到 `~/Applications/TunnelDeck.app`。扩展构建到仓库内的 `extension/dist`。
-
-随后：
-
-1. 在 `chrome://extensions` 开启开发者模式。
-2. 点击“加载已解压的扩展程序”，选择 `extension/dist`。
-3. 复制 Chrome 显示的扩展 ID。
-4. 启动 TunnelDeck，在“Chrome 浏览器集成”中粘贴 ID 并注册。
-5. 重新加载 Chrome 扩展。
-
-也可以在安装时直接传入已知 ID：
-
-```bash
-./scripts/install-from-source.sh --extension-id 你的扩展ID
-```
-
-## Windows
-
-在 PowerShell 中安装前置工具：
-
-```powershell
-winget install --id Git.Git -e
-winget install --id GoLang.Go -e
-winget install --id OpenJS.NodeJS.LTS -e
-```
-
-重新打开 PowerShell，然后执行：
+Windows：
 
 ```powershell
 git clone https://github.com/Nciae-Zyh/TunnelDeck.git
 Set-Location TunnelDeck
-git checkout v0.2.0
+git checkout v0.3.0
 Set-ExecutionPolicy -Scope Process Bypass
 .\scripts\install-from-source.ps1
 ```
 
-脚本会把本机编译的程序复制到 `%LOCALAPPDATA%\Programs\TunnelDeck\TunnelDeck.exe`，并创建当前用户的开始菜单快捷方式。Chrome 扩展位于 `extension\dist`，仍需用户在 `chrome://extensions` 中主动加载。
+## 目录与更新
 
-已知扩展 ID 时可以同时注册 Native Host：
+一行安装器的默认目录：
 
-```powershell
-.\scripts\install-from-source.ps1 -ExtensionId 你的扩展ID
-```
+- macOS/Linux 工具链：`${XDG_DATA_HOME:-$HOME/.local/share}/tunneldeck/toolchains`
+- macOS/Linux 源码：`${XDG_DATA_HOME:-$HOME/.local/share}/tunneldeck/src/版本号`
+- Windows 工具链：`%LOCALAPPDATA%\TunnelDeck\Toolchains`
+- Windows 源码：`%LOCALAPPDATA%\TunnelDeck\Source\版本号`
 
-## Linux
-
-Debian/Ubuntu 示例：
-
-```bash
-sudo apt update
-sudo apt install -y git golang-go nodejs npm build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev
-git clone https://github.com/Nciae-Zyh/TunnelDeck.git
-cd TunnelDeck
-git checkout v0.2.0
-./scripts/install-from-source.sh
-```
-
-桌面程序默认安装到 `~/.local/bin/TunnelDeck`。如果该目录不在 `PATH`，可以直接使用完整路径启动。
-
-## 更新
-
-进入原仓库，切换到新的可信标签，再重新运行安装脚本：
-
-```bash
-git fetch --tags
-git checkout 新版本标签
-./scripts/install-from-source.sh
-```
-
-Windows 使用相同流程并重新运行 `install-from-source.ps1`。
+更新时把命令中的固定标签替换为新版本即可。不同版本源码分目录缓存；现有桌面应用会在覆盖前备份或直接更新到固定安装位置。`--refresh-source` 可重新下载同一版本，已有源码会先移动到带时间戳的备份目录。

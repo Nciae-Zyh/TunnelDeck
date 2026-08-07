@@ -4,14 +4,15 @@ set -eu
 
 extension_id=""
 install_dir=""
+skip_extension_build=0
 
 usage() {
   command_name=$(basename "$0")
   cat >&2 <<EOF
-Usage: $command_name [--extension-id <32-character-id>] [--install-dir <path>]
+Usage: $command_name [--extension-id <32-character-id>] [--install-dir <path>] [--skip-extension-build]
 
-Builds TunnelDeck and its Chrome extension from the checked-out source, then
-installs the desktop application for the current user.
+Builds TunnelDeck and, unless skipped, its Chrome extension from the checked-out
+source, then installs the desktop application for the current user.
 EOF
 }
 
@@ -26,6 +27,10 @@ while [ "$#" -gt 0 ]; do
       [ "$#" -ge 2 ] || { usage; exit 2; }
       install_dir=$2
       shift 2
+      ;;
+    --skip-extension-build)
+      skip_extension_build=1
+      shift
       ;;
     -h|--help)
       usage
@@ -58,9 +63,11 @@ cd "$repo_root"
 echo "Building the desktop frontend..."
 npm --prefix frontend ci
 
-echo "Building the Chrome extension..."
-npm --prefix extension ci
-npm --prefix extension run build
+if [ "$skip_extension_build" -eq 0 ]; then
+  echo "Building the Chrome extension..."
+  npm --prefix extension ci
+  npm --prefix extension run build
+fi
 
 system_name=$(uname -s)
 case "$system_name" in
@@ -109,10 +116,12 @@ fi
 echo
 echo "TunnelDeck installed from locally built source."
 echo "Desktop application: $binary_path"
-echo "Chrome extension directory: $repo_root/extension/dist"
+if [ "$skip_extension_build" -eq 0 ]; then
+  echo "Chrome extension directory: $repo_root/extension/dist"
+fi
 echo "Launch command: $launch_hint"
-if [ -z "$extension_id" ]; then
+if [ -z "$extension_id" ] && [ "$skip_extension_build" -eq 0 ]; then
   echo "After loading extension/dist in chrome://extensions, enter its ID in TunnelDeck to register Chrome integration."
-else
+elif [ -n "$extension_id" ]; then
   echo "Chrome integration registered for: $extension_id"
 fi

@@ -2,5 +2,6 @@ build/bin
 node_modules
 frontend/dist
 extension/dist
+artifacts
 .DS_Store
 *.log
