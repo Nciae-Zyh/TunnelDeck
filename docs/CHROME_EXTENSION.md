@@ -20,6 +20,16 @@ flowchart LR
 - 勾选“记住凭据”后，凭据只写入操作系统钥匙串。
 - Native Host manifest 的 `allowed_origins` 只允许指定的 Chrome 扩展 ID。
 
+正式 Chrome Web Store ID 为 `jnfkjehpbkmfnidfcilehhkpbjjinmod`。源码安装器和桌面端的一键注册都默认使用该 ID；自定义 ID 只保留给开发者模式或其他独立商店项目，任何模式都不会写入通配符。
+
+## 安装检测与首次使用
+
+侧边栏打开后会向 `com.tunneldeck.native` 发出 `ping` 请求。握手成功才显示连接管理界面；找不到 Native Host、来源未被允许或本机程序无法启动时，会显示对应的排查提示和当前平台的安装命令。
+
+这项检测不枚举本机应用或文件。它使用 Chrome 官方 Native Messaging 连接结果判断桌面端及注册状态，安装完成后可以点击“重新检测”，从终端或安装指南返回侧边栏时也会自动复检。
+
+正式商店用户直接运行固定版本安装器即可同时安装桌面端并注册商店 ID。桌面端底部也提供“一键注册商店扩展”；开发者 ID 被收在高级入口中，避免普通用户误改正式 ID。
+
 ## 支持的操作
 
 - 创建、编辑和删除本地转发配置

@@ -9,7 +9,7 @@
   "info": {
     "companyName": "Jackie Moon",
     "productName": "TunnelDeck",
-    "productVersion": "0.3.1",
+    "productVersion": "0.3.2",
     "copyright": "Copyright © 2026 Jackie Moon",
     "comments": "Lightweight cross-platform SSH local forwarding"
   },

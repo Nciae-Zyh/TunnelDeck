@@ -306,12 +306,20 @@ h1 { margin: 0; font-size: clamp(29px, 3vw, 42px); line-height: 1; letter-spacin
 .delete-link { padding: 0; color: #a86773; border: 0; background: none; font-size: 9px; cursor: pointer; white-space: nowrap; }
 .delete-link:disabled { cursor: not-allowed; opacity: .4; }
 
-.browser-panel { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 14px 20px; align-items: start; }
-.browser-panel .panel-heading { grid-row: 1 / span 3; margin: 0; }
+.browser-panel { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 12px 20px; align-items: start; }
+.browser-panel .panel-heading { grid-row: 1 / span 5; margin: 0; }
+.official-extension-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 13px; border: 1px solid rgba(94, 234, 212, .18); border-radius: 11px; background: rgba(94, 234, 212, .04); }
+.official-extension-card > div { display: grid; min-width: 0; gap: 5px; }
+.official-extension-card strong { color: #d9e6ee; font-size: 11px; }
+.official-extension-card code { overflow: hidden; color: #728a9d; font: 9px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; white-space: nowrap; }
+.store-badge { justify-self: start; padding: 3px 5px; color: var(--accent); border: 1px solid rgba(94, 234, 212, .2); border-radius: 999px; font: 700 7px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
 .browser-registration { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
 .browser-registration .button { min-height: 39px; }
 .browser-help { margin: 0; color: #607287; font-size: 9px; line-height: 1.55; }
 .browser-help code { color: #9db0c2; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.custom-extension-registration { color: #66798b; border-top: 1px solid rgba(139, 165, 191, .1); font-size: 9px; }
+.custom-extension-registration summary { padding-top: 10px; cursor: pointer; }
+.custom-extension-registration .browser-registration { margin-top: 10px; }
 .registration-result { display: grid; gap: 5px; padding: 11px 12px; color: #9cb0c3; border: 1px solid rgba(251, 113, 133, .2); border-radius: 10px; background: rgba(251, 113, 133, .045); font-size: 9px; }
 .registration-result[data-ok="true"] { border-color: rgba(94, 234, 212, .2); background: rgba(94, 234, 212, .045); }
 .registration-result strong { color: var(--danger); font-size: 10px; }

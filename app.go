@@ -229,8 +229,7 @@ func (a *App) OpenProfileInBrowser(profileID string) OperationResult {
 }
 
 func (a *App) RegisterNativeHost(extensionID string) NativeHostRegistrationResult {
-	extensionID = strings.TrimSpace(extensionID)
-	return registerNativeMessagingHost(extensionID)
+	return registerNativeMessagingHost(resolveChromeExtensionID(extensionID))
 }
 
 func (a *App) TrustHost(profileID string) OperationResult {

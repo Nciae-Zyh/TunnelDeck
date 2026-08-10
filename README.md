@@ -60,19 +60,19 @@ ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com
 当前阶段不提供未签名的桌面二进制或安装器。macOS/Linux 可以像 nvm 一样用一条命令检查依赖、下载固定源码标签并在本机完成构建：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh
 ```
 
 没有 `curl` 时可以使用 `wget`：
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh
+wget -qO- https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh
 ```
 
 Windows PowerShell 使用：
 
 ```powershell
-irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | iex
+irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.ps1 | iex
 ```
 
 安装器先报告操作系统、架构、下载与校验工具、Go、Node.js 和平台构建库。已有 Go 1.25+/Node.js 20+ 会直接复用；缺失时下载到 TunnelDeck 私有用户目录并校验官方 SHA-256，不修改全局 PATH。macOS 的 Xcode Command Line Tools、Linux 的 GTK3/WebKitGTK 4.1 和 Windows 的 WebView2 会在构建前检查。
@@ -80,7 +80,7 @@ irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | 
 只检测、不安装：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh -s -- --check
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh -s -- --check
 ```
 
 脚本在用户电脑上构建桌面应用；从 Chrome Web Store 安装扩展后，将正式商店 ID 传给安装器即可同时注册 Native Messaging。完整依赖、手动审查方式、开发扩展加载和更新步骤见 [源码安装指南](docs/SOURCE_INSTALL.md)。
@@ -89,7 +89,9 @@ curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install
 
 [TunnelDeck Chrome Web Store 扩展](https://chromewebstore.google.com/detail/tunneldeck/jnfkjehpbkmfnidfcilehhkpbjjinmod)已经公开上线。它是 Manifest V3 侧边栏扩展，支持创建、编辑、导入、启停连接以及确认 SSH 主机指纹。扩展通过 Native Messaging 控制本机 TunnelDeck，不能也不会在浏览器进程内建立 SSH 连接。
 
-普通用户先按上面的“安装”章节部署桌面端，再从 Chrome Web Store 安装扩展。启动桌面端后，在底部“Chrome 浏览器集成”中确认正式扩展 ID `jnfkjehpbkmfnidfcilehhkpbjjinmod`，需要时点击“注册 Chrome 服务”，然后重新加载扩展。
+普通用户先按上面的“安装”章节部署桌面端，再从 Chrome Web Store 安装扩展。一行安装器会默认注册正式商店 ID `jnfkjehpbkmfnidfcilehhkpbjjinmod`；如果先安装了桌面端，也可以在底部“Chrome 浏览器集成”中点击“一键注册商店扩展”。
+
+侧边栏打开时会通过 Native Messaging 握手判断桌面端是否已正确安装和注册。无法连接时，扩展会按 macOS、Windows、Linux 显示固定版本安装命令、完整安装指南和“重新检测”按钮；从安装窗口返回 Chrome 时也会自动复检。检测只尝试连接声明的 `com.tunneldeck.native`，不会扫描文件、读取浏览记录或申请额外网站权限。
 
 网页快捷入口遵循和桌面端相同的规则：
 
@@ -100,7 +102,7 @@ curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install
 
 开发构建、Native Host 注册和安全边界见 [Chrome 扩展文档](docs/CHROME_EXTENSION.md)。商店说明、权限理由、隐私表单口径和审核步骤见 [Chrome Web Store 上架资料](docs/CHROME_WEB_STORE_LISTING.md)。
 
-桌面端底部的“Chrome 浏览器集成”可以直接填写 Chrome 扩展 ID 并注册本机服务，不再需要手动运行脚本。请先通过源码安装器把应用放到固定位置，再执行注册；应用位置改变后需要重新注册。
+桌面端底部的“Chrome 浏览器集成”默认信任正式商店 ID，并保留“开发者模式或其他商店 ID”的高级入口。请先通过源码安装器把应用放到固定位置，再执行注册；应用位置改变后需要重新注册。
 
 ## 凭据与配置
 

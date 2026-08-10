@@ -1,5 +1,5 @@
 param(
-  [string]$Version = $(if ($env:TUNNELDECK_VERSION) { $env:TUNNELDECK_VERSION } else { 'v0.3.1' }),
+  [string]$Version = $(if ($env:TUNNELDECK_VERSION) { $env:TUNNELDECK_VERSION } else { 'v0.3.2' }),
   [string]$ExtensionId = $env:TUNNELDECK_EXTENSION_ID,
   [string]$ChromeStoreId = $env:TUNNELDECK_CHROME_STORE_ID,
   [string]$InstallDirectory = $env:TUNNELDECK_INSTALL_DIR

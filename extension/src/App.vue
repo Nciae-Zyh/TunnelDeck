@@ -12,6 +12,16 @@ import type {
 } from './types'
 
 type Screen = 'profiles' | 'editor'
+type InstallPlatform = 'macos' | 'linux' | 'windows' | 'other'
+
+const releaseVersion = 'v0.3.2'
+const repositoryUrl = 'https://github.com/Nciae-Zyh/TunnelDeck'
+const installGuideUrl = `${repositoryUrl}/blob/${releaseVersion}/docs/SOURCE_INSTALL.md`
+const installCommands: Record<Exclude<InstallPlatform, 'other'>, string> = {
+  macos: `curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/${releaseVersion}/install.sh | sh`,
+  linux: `curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/${releaseVersion}/install.sh | sh`,
+  windows: `irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/${releaseVersion}/install.ps1 | iex`,
+}
 
 const screen = ref<Screen>('profiles')
 const profiles = ref<ProfileView[]>([])
@@ -22,13 +32,21 @@ const secret = ref('')
 const importCommand = ref('ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com')
 const importVisible = ref(false)
 const loading = ref(true)
+const nativeChecking = ref(false)
 const busy = ref(false)
 const nativeConnected = ref(false)
 const nativeError = ref('')
+const installPlatform = ref<InstallPlatform>('other')
 const notice = ref({ visible: false, kind: 'success' as 'success' | 'error', message: '' })
 let noticeTimer: number | undefined
 let removeStatusListener: (() => void) | undefined
 let removeConnectionListener: (() => void) | undefined
+
+const platformOptions: Array<{ id: Exclude<InstallPlatform, 'other'>; label: string }> = [
+  { id: 'macos', label: 'macOS' },
+  { id: 'windows', label: 'Windows' },
+  { id: 'linux', label: 'Linux' },
+]
 
 function blankProfile(): TunnelProfile {
   return {
@@ -61,6 +79,20 @@ const currentRunning = computed(() => isActive(currentStatus.value.state))
 const needsHostTrust = computed(() => currentStatus.value.state === 'host-key-required' && currentStatus.value.hostKey)
 const secretLabel = computed(() => draft.value.authMode === 'password' ? 'SSH 密码' : '私钥口令（未加密可留空）')
 const hasStoredSecret = computed(() => selectedProfile.value?.hasStoredSecret && draft.value.rememberSecret)
+const installCommand = computed(() => installPlatform.value === 'other' ? '' : installCommands[installPlatform.value])
+const nativeErrorSummary = computed(() => {
+  const message = nativeError.value.toLowerCase()
+  if (message.includes('not found') || message.includes('not registered')) {
+    return '未检测到已注册的 TunnelDeck 桌面端。'
+  }
+  if (message.includes('forbidden') || message.includes('not allowed')) {
+    return '桌面端已安装，但尚未信任当前商店扩展。请重新运行安装器或在桌面端注册 Chrome 服务。'
+  }
+  if (message.includes('failed to start') || message.includes('exited')) {
+    return '检测到本机服务注册信息，但程序无法启动。请重新安装后再检测。'
+  }
+  return '暂时无法连接 TunnelDeck 桌面端。完成安装或注册后可以直接重新检测。'
+})
 
 function fallbackStatus(profile: TunnelProfile): TunnelStatus {
   return {
@@ -144,8 +176,42 @@ function backToProfiles() {
   screen.value = 'profiles'
 }
 
-function reloadPanel() {
-	window.location.reload()
+async function detectInstallPlatform() {
+  try {
+    const info = await chrome.runtime.getPlatformInfo()
+    if (info.os === 'mac') installPlatform.value = 'macos'
+    else if (info.os === 'win') installPlatform.value = 'windows'
+    else if (info.os === 'linux') installPlatform.value = 'linux'
+    else installPlatform.value = 'other'
+  } catch {
+    installPlatform.value = 'other'
+  }
+}
+
+async function detectNativeHost(showSuccess = false) {
+  if (nativeChecking.value) return
+  nativeChecking.value = true
+  try {
+    await nativeBridge.request('ping', undefined, 8_000)
+    nativeConnected.value = true
+    nativeError.value = ''
+    await loadData()
+    if (showSuccess) showNotice('已连接 TunnelDeck 本地服务')
+  } catch (error) {
+    nativeConnected.value = false
+    nativeError.value = errorMessage(error)
+  } finally {
+    nativeChecking.value = false
+    loading.value = false
+  }
+}
+
+function handlePanelFocus() {
+  if (!nativeConnected.value && !loading.value) void detectNativeHost()
+}
+
+function handleVisibilityChange() {
+  if (document.visibilityState === 'visible') handlePanelFocus()
 }
 
 async function saveCurrent(): Promise<string | null> {
@@ -288,22 +354,17 @@ onMounted(async () => {
     nativeConnected.value = connected
     nativeError.value = error
   })
-  try {
-    await nativeBridge.request('ping')
-    nativeConnected.value = true
-    nativeError.value = ''
-    await loadData()
-  } catch (error) {
-    nativeConnected.value = false
-    nativeError.value = errorMessage(error)
-  } finally {
-    loading.value = false
-  }
+  window.addEventListener('focus', handlePanelFocus)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  await detectInstallPlatform()
+  await detectNativeHost()
 })
 
 onBeforeUnmount(() => {
   removeStatusListener?.()
   removeConnectionListener?.()
+  window.removeEventListener('focus', handlePanelFocus)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
   if (noticeTimer) window.clearTimeout(noticeTimer)
 })
 </script>
@@ -314,19 +375,58 @@ onBeforeUnmount(() => {
       <button v-if="screen === 'editor'" class="icon-button" type="button" aria-label="返回隧道列表" @click="backToProfiles">←</button>
       <div class="brand-mark" aria-hidden="true"><span></span><span></span></div>
       <div class="brand-copy"><strong>TunnelDeck</strong><small>CHROME CONTROL</small></div>
-      <span class="native-state" :class="{ online: nativeConnected }">{{ nativeConnected ? '本地服务在线' : '未连接' }}</span>
+      <span class="native-state" :class="{ online: nativeConnected, checking: loading || nativeChecking }">
+        {{ loading || nativeChecking ? '检测中' : nativeConnected ? '本地服务在线' : '未安装' }}
+      </span>
     </header>
 
-    <section v-if="!nativeConnected && !loading" class="offline-card">
+    <section v-if="loading" class="detection-card" aria-live="polite">
+      <span class="detection-spinner" aria-hidden="true"></span>
+      <strong>正在检测 TunnelDeck 桌面端</strong>
+      <p>通过 Native Messaging 执行本机握手，不会扫描文件或读取浏览记录。</p>
+    </section>
+
+    <section v-else-if="!nativeConnected" class="offline-card" aria-live="polite">
       <span class="offline-icon">!</span>
-      <h1>需要 TunnelDeck 本地服务</h1>
-      <p>{{ nativeError || 'Chrome 找不到 Native Messaging Host。' }}</p>
-      <ol>
-        <li>安装 TunnelDeck 桌面版。</li>
-        <li>运行项目提供的 Native Host 注册脚本。</li>
-        <li>关闭并重新打开此侧边栏。</li>
+      <p class="offline-eyebrow">DESKTOP APP REQUIRED</p>
+      <h1>安装桌面端后即可连接</h1>
+      <p class="offline-summary">{{ nativeErrorSummary }}</p>
+
+      <div class="platform-tabs" role="tablist" aria-label="选择操作系统">
+        <button
+          v-for="option in platformOptions"
+          :key="option.id"
+          type="button"
+          role="tab"
+          :aria-selected="installPlatform === option.id"
+          :class="{ active: installPlatform === option.id }"
+          @click="installPlatform = option.id"
+        >{{ option.label }}</button>
+      </div>
+
+      <div v-if="installCommand" class="install-command">
+        <span>在{{ installPlatform === 'windows' ? ' PowerShell' : '终端' }}中运行</span>
+        <code>{{ installCommand }}</code>
+      </div>
+      <p v-else class="unsupported-platform">当前系统请打开安装指南，选择支持的平台与安装方式。</p>
+
+      <ol class="install-steps">
+        <li>安装器会检查依赖，从固定版本源码构建桌面端。</li>
+        <li>正式商店 ID 会自动写入 Native Host 的精确信任列表。</li>
+        <li>安装完成后回到这里，点击“重新检测”。</li>
       </ol>
-      <button class="button primary" type="button" @click="reloadPanel">重新检测</button>
+
+      <div class="offline-actions">
+        <button class="button primary" type="button" :disabled="nativeChecking" @click="detectNativeHost(true)">
+          {{ nativeChecking ? '检测中…' : '重新检测' }}
+        </button>
+        <a class="button ghost" :href="installGuideUrl" target="_blank" rel="noreferrer">完整安装指南 ↗</a>
+      </div>
+      <a class="repository-link" :href="repositoryUrl" target="_blank" rel="noreferrer">查看 GitHub 源码与安全说明 ↗</a>
+      <details v-if="nativeError" class="native-diagnostic">
+        <summary>查看 Chrome 检测信息</summary>
+        <code>{{ nativeError }}</code>
+      </details>
     </section>
 
     <section v-else-if="screen === 'profiles'" class="content profiles-screen">

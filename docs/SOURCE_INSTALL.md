@@ -5,7 +5,7 @@ TunnelDeck 当前不提供未签名的桌面二进制或桌面安装器。公开
 这种方式不等于第三方代码签名。安装前仍应确认域名、仓库、版本标签和脚本内容，不要运行来源不明的复制版命令。希望先阅读脚本时，可以下载后再执行：
 
 ```bash
-curl -fsSLo /tmp/tunneldeck-install.sh https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh
+curl -fsSLo /tmp/tunneldeck-install.sh https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh
 less /tmp/tunneldeck-install.sh
 sh /tmp/tunneldeck-install.sh
 ```
@@ -15,13 +15,13 @@ sh /tmp/tunneldeck-install.sh
 macOS/Linux 只检测、不修改系统：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh -s -- --check
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh -s -- --check
 ```
 
 Windows PowerShell 只检测：
 
 ```powershell
-$env:TUNNELDECK_CHECK_ONLY='1'; irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | iex
+$env:TUNNELDECK_CHECK_ONLY='1'; irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.ps1 | iex
 Remove-Item Env:TUNNELDECK_CHECK_ONLY
 ```
 
@@ -40,13 +40,13 @@ Remove-Item Env:TUNNELDECK_CHECK_ONLY
 支持 Apple Silicon 和 Intel。先确保已经安装 Xcode Command Line Tools；缺失时脚本会打开 Apple 安装提示，并要求完成后重新运行。
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh
 ```
 
 没有 `curl` 时：
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh
+wget -qO- https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh
 ```
 
 桌面应用默认安装到 `~/Applications/TunnelDeck.app`。在 macOS 首次启动本机编译但未经 Apple 公证的应用时，仍可能需要在“隐私与安全性”中确认打开。
@@ -56,7 +56,7 @@ wget -qO- https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.
 支持 AMD64 和 ARM64。GTK3、WebKitGTK 4.1 和编译工具是系统依赖；缺失时安装器会提示确认，并支持 apt、dnf、pacman 和 zypper。无人值守环境只有显式加入 `--yes` 才会安装系统包：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh -s -- --yes
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh -s -- --yes
 ```
 
 桌面程序默认安装到 `~/.local/bin/TunnelDeck`。如果该目录不在 `PATH`，可使用完整路径启动。
@@ -66,7 +66,7 @@ curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install
 支持 Windows AMD64/x64。PowerShell 安装器会检查 WebView2，并在用户目录放置缺失的 Go/Node 工具链：
 
 ```powershell
-irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | iex
+irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.ps1 | iex
 ```
 
 桌面程序默认安装到 `%LOCALAPPDATA%\Programs\TunnelDeck\TunnelDeck.exe`，并为当前用户创建开始菜单快捷方式。如果没有 WebView2，脚本会停止并给出 Microsoft Evergreen Runtime 的安装地址，不会静默运行未校验的第三方安装程序。
@@ -76,16 +76,18 @@ irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | 
 TunnelDeck 的正式 Chrome Web Store 扩展 ID 为 `jnfkjehpbkmfnidfcilehhkpbjjinmod`。macOS/Linux 默认在安装桌面端时同时注册该 ID：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh
 ```
 
 Windows PowerShell：
 
 ```powershell
-irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | iex
+irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.ps1 | iex
 ```
 
 这会跳过本地扩展构建，只构建桌面端，并把 Native Messaging Host 的 `allowed_origins` 限制为该商店 ID。安装后重新加载或重新启动扩展即可。
+
+商店扩展会在侧边栏启动时自动检测 Native Host。若安装尚未完成或注册信息失效，侧边栏会显示与本页相同的分系统安装命令；完成后点击“重新检测”即可，无需重新安装扩展。
 
 开发者模式加载时产生的 ID 不应当作正式商店 ID。需要注册其他商店项目时，仍可传 `--chrome-store-id` 或 `TUNNELDECK_CHROME_STORE_ID` 覆盖默认值；桌面端底部也支持手动修改 ID 后点击“注册 Chrome 服务”。
 
@@ -93,8 +95,8 @@ irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | 
 
 不使用 Chrome Web Store 时，传入 `--extension-id`（Windows 使用 `TUNNELDECK_EXTENSION_ID`）会构建开发版扩展。源码缓存目录为：
 
-- macOS/Linux：`${XDG_DATA_HOME:-$HOME/.local/share}/tunneldeck/src/v0.3.1/extension/dist`
-- Windows：`%LOCALAPPDATA%\TunnelDeck\Source\v0.3.1\extension\dist`
+- macOS/Linux：`${XDG_DATA_HOME:-$HOME/.local/share}/tunneldeck/src/v0.3.2/extension/dist`
+- Windows：`%LOCALAPPDATA%\TunnelDeck\Source\v0.3.2\extension\dist`
 
 然后：
 
@@ -107,7 +109,7 @@ irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | 
 已知开发版 ID 时，也可以一次完成构建和注册：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh -s -- --extension-id 你的开发扩展ID
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh -s -- --extension-id 你的开发扩展ID
 ```
 
 ## 手动检出源码
@@ -117,7 +119,7 @@ curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install
 ```bash
 git clone https://github.com/Nciae-Zyh/TunnelDeck.git
 cd TunnelDeck
-git checkout v0.3.1
+git checkout v0.3.2
 ./scripts/install-from-source.sh
 ```
 
@@ -126,7 +128,7 @@ Windows：
 ```powershell
 git clone https://github.com/Nciae-Zyh/TunnelDeck.git
 Set-Location TunnelDeck
-git checkout v0.3.1
+git checkout v0.3.2
 Set-ExecutionPolicy -Scope Process Bypass
 .\scripts\install-from-source.ps1
 ```

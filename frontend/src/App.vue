@@ -72,7 +72,7 @@ const importOpen = ref(false)
 const importCommand = ref('ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com')
 const configPath = ref('')
 const officialChromeExtensionId = 'jnfkjehpbkmfnidfcilehhkpbjjinmod'
-const extensionId = ref(officialChromeExtensionId)
+const extensionId = ref('')
 const nativeHostBusy = ref(false)
 const nativeHostRegistration = ref<NativeHostRegistrationResult | null>(null)
 let toastTimer: number | undefined
@@ -286,9 +286,9 @@ async function copyCommand() {
     notify(String(error), 'error')
   }
 }
-async function registerChromeService() {
-  const normalizedId = extensionId.value.trim()
-  if (!/^[a-p]{32}$/.test(normalizedId)) {
+async function registerChromeService(extensionIdToRegister: string) {
+  const normalizedId = extensionIdToRegister.trim()
+  if (normalizedId && !/^[a-p]{32}$/.test(normalizedId)) {
     notify('扩展 ID 必须是 32 位小写字母，且只能使用 a 到 p', 'error')
     return
   }
@@ -304,6 +304,13 @@ async function registerChromeService() {
   } finally {
     nativeHostBusy.value = false
   }
+}
+async function registerOfficialChromeService() {
+  await registerChromeService('')
+}
+
+async function registerCustomChromeService() {
+  await registerChromeService(extensionId.value)
 }
 function stateLabel(state: TunnelState): string {
   return {
@@ -505,30 +512,47 @@ onBeforeUnmount(() => {
         </section>
 
         <section class="panel browser-panel">
-          <div class="panel-heading"><span class="step">07</span><div><h2>Chrome 浏览器集成</h2><p>按扩展 ID 注册本机通信服务</p></div></div>
-          <div class="browser-registration">
-            <label class="field">
-              <span>Chrome 扩展 ID</span>
-              <input
-                v-model.trim="extensionId"
-                maxlength="32"
-                pattern="[a-p]{32}"
-                :placeholder="officialChromeExtensionId"
-                autocomplete="off"
-                spellcheck="false"
-              >
-            </label>
+          <div class="panel-heading"><span class="step">07</span><div><h2>Chrome 浏览器集成</h2><p>为正式商店扩展注册本机通信服务</p></div></div>
+          <div class="official-extension-card">
+            <div>
+              <span class="store-badge">CHROME WEB STORE</span>
+              <strong>TunnelDeck 正式扩展</strong>
+              <code>{{ officialChromeExtensionId }}</code>
+            </div>
             <button
               class="button primary"
               type="button"
-              :disabled="nativeHostBusy || !extensionIdValid"
-              @click="registerChromeService"
-            >{{ nativeHostBusy ? '注册中…' : '注册 Chrome 服务' }}</button>
+              :disabled="nativeHostBusy"
+              @click="registerOfficialChromeService"
+            >{{ nativeHostBusy ? '注册中…' : '一键注册商店扩展' }}</button>
           </div>
-          <p class="browser-help">在 <code>chrome://extensions</code> 打开开发者模式即可复制扩展 ID。注册只允许该扩展访问 TunnelDeck；扩展 ID 变化后需要重新注册。</p>
+          <p class="browser-help">只会把正式扩展的精确来源写入 <code>allowed_origins</code>，不会使用通配符。注册后回到 Chrome 侧边栏点击“重新检测”。</p>
+          <details class="custom-extension-registration">
+            <summary>开发者模式或其他商店 ID</summary>
+            <div class="browser-registration">
+              <label class="field">
+                <span>自定义 Chrome 扩展 ID</span>
+                <input
+                  v-model.trim="extensionId"
+                  maxlength="32"
+                  pattern="[a-p]{32}"
+                  placeholder="从 chrome://extensions 复制"
+                  autocomplete="off"
+                  spellcheck="false"
+                >
+              </label>
+              <button
+                class="button ghost"
+                type="button"
+                :disabled="nativeHostBusy || !extensionIdValid"
+                @click="registerCustomChromeService"
+              >注册自定义 ID</button>
+            </div>
+          </details>
           <div v-if="nativeHostRegistration" class="registration-result" :data-ok="nativeHostRegistration.ok">
             <strong>{{ nativeHostRegistration.ok ? '注册成功' : '注册失败' }}</strong>
             <span>{{ nativeHostRegistration.message }}</span>
+            <code v-if="nativeHostRegistration.extensionId">受信任 ID：{{ nativeHostRegistration.extensionId }}</code>
             <code v-if="nativeHostRegistration.manifestPath">清单：{{ nativeHostRegistration.manifestPath }}</code>
             <code v-if="nativeHostRegistration.binaryPath">程序：{{ nativeHostRegistration.binaryPath }}</code>
           </div>

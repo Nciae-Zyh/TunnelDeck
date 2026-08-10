@@ -6,9 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 var chromeExtensionIDPattern = regexp.MustCompile(`^[a-p]{32}$`)
+
+const officialChromeExtensionID = "jnfkjehpbkmfnidfcilehhkpbjjinmod"
 
 type NativeHostRegistrationResult struct {
 	OK           bool   `json:"ok"`
@@ -32,6 +35,14 @@ func validateChromeExtensionID(extensionID string) error {
 		return fmt.Errorf("扩展 ID 必须是 32 位小写字母，且只能使用 a 到 p")
 	}
 	return nil
+}
+
+func resolveChromeExtensionID(extensionID string) string {
+	extensionID = strings.TrimSpace(extensionID)
+	if extensionID == "" {
+		return officialChromeExtensionID
+	}
+	return extensionID
 }
 
 func currentExecutablePath() (string, error) {

@@ -19,6 +19,19 @@ func TestValidateChromeExtensionID(t *testing.T) {
 	}
 }
 
+func TestResolveChromeExtensionID(t *testing.T) {
+	if got := resolveChromeExtensionID(""); got != officialChromeExtensionID {
+		t.Fatalf("empty ID should resolve to the official store ID: %q", got)
+	}
+	if got := resolveChromeExtensionID("  " + officialChromeExtensionID + "  "); got != officialChromeExtensionID {
+		t.Fatalf("ID should be trimmed: %q", got)
+	}
+	custom := "ipmjdganppehhljijcdndfjjmjjpalbp"
+	if got := resolveChromeExtensionID(custom); got != custom {
+		t.Fatalf("custom ID should be preserved: %q", got)
+	}
+}
+
 func TestWriteNativeHostManifest(t *testing.T) {
 	root := t.TempDir()
 	binaryPath := filepath.Join(root, "TunnelDeck")
@@ -26,7 +39,7 @@ func TestWriteNativeHostManifest(t *testing.T) {
 		t.Fatal(err)
 	}
 	manifestPath := filepath.Join(root, "native", nativeHostName+".json")
-	extensionID := "ipmjdganppehhljijcdndfjjmjjpalbp"
+	extensionID := officialChromeExtensionID
 	if err := writeNativeHostManifest(manifestPath, binaryPath, extensionID); err != nil {
 		t.Fatal(err)
 	}

@@ -25,9 +25,9 @@
 > 1. 打开 GitHub 项目，按 README 安装 TunnelDeck 桌面端：
 >    https://github.com/Nciae-Zyh/TunnelDeck
 > 2. macOS / Linux 可以使用：
->    curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh
+>    curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh
 > 3. Windows PowerShell 可以使用：
->    irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | iex
+>    irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.ps1 | iex
 > 4. 从当前 Chrome Web Store 页面安装扩展，启动 TunnelDeck 桌面端，在底部“Chrome 浏览器集成”中确认正式扩展 ID，并点击“注册 Chrome 服务”；完成后重新加载扩展。
 >
 > 主要功能：
@@ -74,13 +74,13 @@
 2. 在 macOS/Linux 运行一行安装命令，并把商店项目 ID 传给 `--chrome-store-id`：
 
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh
+   curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh
    ```
 
 3. Windows PowerShell 使用：
 
    ```powershell
-   irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | iex
+   irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.ps1 | iex
    ```
 
 4. 启动 TunnelDeck 桌面端，确认底部 Chrome 集成显示相同 ID；如未注册，填写 ID 并点击“注册 Chrome 服务”。
