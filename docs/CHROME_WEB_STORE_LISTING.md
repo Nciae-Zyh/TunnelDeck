@@ -9,17 +9,39 @@
 - 语言：`中文（简体）`
 - 支持邮箱：`support@sparkles-editor.com`
 - 主页：`https://github.com/Nciae-Zyh/TunnelDeck`
+- Chrome Web Store：`https://chromewebstore.google.com/detail/tunneldeck/jnfkjehpbkmfnidfcilehhkpbjjinmod`
 - 隐私政策：`https://github.com/Nciae-Zyh/TunnelDeck/blob/main/docs/PRIVACY.md`
 
 简短说明：
 
 > 从 Chrome 侧边栏创建、启动和停止由本机 TunnelDeck 管理的 SSH 本地端口转发。
 
-详细说明：
+详细说明（商店当前公开版本应使用以下完整文案）：
 
-> TunnelDeck 是一个需要配套开源桌面应用的 SSH 本地端口转发控制器。安装桌面端并注册 Chrome 集成后，可以在侧边栏创建、编辑、导入、启动和停止隧道，查看连接状态，确认 SSH 主机指纹，并在用户主动点击时打开已标记为 HTTP 或 HTTPS 的本地服务。
+> TunnelDeck 是一个需要配套开源桌面应用的 SSH 本地端口转发控制器。安装桌面端并注册 Chrome 集成后，可以直接在 Chrome 侧边栏管理本机隧道。
+>
+> 安装方法：
+>
+> 1. 打开 GitHub 项目，按 README 安装 TunnelDeck 桌面端：
+>    https://github.com/Nciae-Zyh/TunnelDeck
+> 2. macOS / Linux 可以使用：
+>    curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.sh | sh
+> 3. Windows PowerShell 可以使用：
+>    irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install.ps1 | iex
+> 4. 从当前 Chrome Web Store 页面安装扩展，启动 TunnelDeck 桌面端，在底部“Chrome 浏览器集成”中确认正式扩展 ID，并点击“注册 Chrome 服务”；完成后重新加载扩展。
+>
+> 主要功能：
+>
+> • 从 Chrome 侧边栏创建、编辑和导入 SSH 本地端口转发；
+> • 启动、停止并查看隧道实时状态；
+> • 支持密码和 SSH 私钥认证，由桌面端调用操作系统安全存储；
+> • 首次连接要求用户确认 SSH 主机指纹；
+> • 只有用户把端口标记为 HTTP/HTTPS 并主动点击时，才会打开本地网页。
 >
 > 扩展不在浏览器内实现 SSH，也不执行任意 shell 命令。SSH、TCP 监听、私钥读取和系统凭据存储均由本机 TunnelDeck 桌面应用完成。扩展不读取浏览历史或网页内容，不申请所有网站访问权限，也不会自动打开端口页面。
+>
+> 项目源码、完整安装说明和问题反馈：
+> https://github.com/Nciae-Zyh/TunnelDeck
 
 ## 单一用途
 

@@ -87,7 +87,9 @@ curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.1/install
 
 ## Chrome 扩展
 
-仓库中的 `extension/` 是 Manifest V3 侧边栏扩展，支持创建、编辑、导入、启停连接以及确认 SSH 主机指纹。扩展通过 Native Messaging 控制本机 TunnelDeck，不能也不会在浏览器进程内建立 SSH 连接。
+[TunnelDeck Chrome Web Store 扩展](https://chromewebstore.google.com/detail/tunneldeck/jnfkjehpbkmfnidfcilehhkpbjjinmod)已经公开上线。它是 Manifest V3 侧边栏扩展，支持创建、编辑、导入、启停连接以及确认 SSH 主机指纹。扩展通过 Native Messaging 控制本机 TunnelDeck，不能也不会在浏览器进程内建立 SSH 连接。
+
+普通用户先按上面的“安装”章节部署桌面端，再从 Chrome Web Store 安装扩展。启动桌面端后，在底部“Chrome 浏览器集成”中确认正式扩展 ID `jnfkjehpbkmfnidfcilehhkpbjjinmod`，需要时点击“注册 Chrome 服务”，然后重新加载扩展。
 
 网页快捷入口遵循和桌面端相同的规则：
 
