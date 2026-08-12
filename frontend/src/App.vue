@@ -76,6 +76,8 @@ const extensionId = ref('')
 const nativeHostBusy = ref(false)
 const nativeHostRegistration = ref<NativeHostRegistrationResult | null>(null)
 let toastTimer: number | undefined
+let syncTimer: number | undefined
+let syncing = false
 
 function blankProfile(): TunnelProfile {
   return {
@@ -133,7 +135,14 @@ function notify(message: string, kind: 'success' | 'error' = 'success') {
   toastTimer = window.setTimeout(() => { toast.visible = false }, 4200)
 }
 
-async function loadData(preferredId?: string) {
+function draftMatches(profile: ProfileView): boolean {
+  return (Object.keys(blankProfile()) as Array<keyof TunnelProfile>)
+    .every(key => draft[key] === profile[key])
+}
+
+async function loadData(preferredId?: string, preserveDirtyDraft = false) {
+  const previous = profiles.value.find(profile => profile.id === selectedId.value)
+  const keepDraft = preserveDirtyDraft && (!previous || !draftMatches(previous))
   const data = await Bootstrap()
   profiles.value = (data.profiles ?? []) as ProfileView[]
   configPath.value = data.configPath ?? ''
@@ -141,11 +150,23 @@ async function loadData(preferredId?: string) {
   for (const status of (data.statuses ?? []) as TunnelStatus[]) statuses[status.profileId] = status
   if (data.startupError) notify(data.startupError, 'error')
   const selected = profiles.value.find(profile => profile.id === (preferredId || selectedId.value)) ?? profiles.value[0]
-  if (selected) {
+  if (selected && !keepDraft) {
     selectedId.value = selected.id
     assignDraft(selected)
-  } else {
+  } else if (!selected && !keepDraft) {
     createProfile()
+  }
+}
+
+async function refreshSharedState() {
+  if (syncing || busy.value || document.visibilityState === 'hidden') return
+  syncing = true
+  try {
+    await loadData(undefined, true)
+  } catch {
+    // A following poll retries; normal operations still surface actionable errors.
+  } finally {
+    syncing = false
   }
 }
 
@@ -328,10 +349,12 @@ onMounted(async () => {
   } finally {
     booting.value = false
   }
+  syncTimer = window.setInterval(refreshSharedState, 1500)
 })
 onBeforeUnmount(() => {
   EventsOff('tunnel:status')
   if (toastTimer) window.clearTimeout(toastTimer)
+  if (syncTimer) window.clearInterval(syncTimer)
 })
 </script>
 

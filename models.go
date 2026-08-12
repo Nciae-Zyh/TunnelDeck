@@ -211,5 +211,5 @@ func stoppedStatus(p TunnelProfile) TunnelStatus {
 }
 
 func nowRFC3339() string {
-	return time.Now().Format(time.RFC3339)
+	return time.Now().Format(time.RFC3339Nano)
 }

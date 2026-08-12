@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -73,9 +74,12 @@ func runNativeMessagingHostWithApp(app *App, input io.Reader, output io.Writer) 
 	host.app.initializeManager(func(status TunnelStatus) {
 		_ = host.writer.write(nativeEvent{Event: "tunnel.status", Payload: status})
 	})
-	if host.app.manager != nil {
-		defer host.app.manager.StopAll()
+	if err := host.app.coordinateRuntime(); err != nil {
+		host.app.mu.Lock()
+		host.app.startupErr = err
+		host.app.mu.Unlock()
 	}
+	defer host.app.shutdown(context.Background())
 
 	for {
 		payload, err := readNativeMessage(input)

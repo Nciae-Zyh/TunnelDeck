@@ -39,6 +39,8 @@ const nativeError = ref('')
 const installPlatform = ref<InstallPlatform>('other')
 const notice = ref({ visible: false, kind: 'success' as 'success' | 'error', message: '' })
 let noticeTimer: number | undefined
+let syncTimer: number | undefined
+let syncing = false
 let removeStatusListener: (() => void) | undefined
 let removeConnectionListener: (() => void) | undefined
 
@@ -146,14 +148,36 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-async function loadData(preferredId?: string) {
+function draftMatches(profile: ProfileView): boolean {
+  return (Object.keys(blankProfile()) as Array<keyof TunnelProfile>)
+    .every(key => draft.value[key] === profile[key])
+}
+
+async function loadData(preferredId?: string, preserveDirtyDraft = false) {
+  const previous = profiles.value.find(profile => profile.id === selectedId.value)
+  const keepDraft = preserveDirtyDraft && screen.value === 'editor' && (!previous || !draftMatches(previous))
   const data = await nativeBridge.request<BootstrapData>('bootstrap')
   profiles.value = data.profiles ?? []
   statuses.value = Object.fromEntries((data.statuses ?? []).map(status => [status.profileId, status]))
   if (data.startupError) showNotice(data.startupError, 'error')
   const selected = profiles.value.find(profile => profile.id === (preferredId || selectedId.value))
-  if (selected && screen.value === 'editor') {
-    selectProfile(selected)
+  if (selected && screen.value === 'editor' && !keepDraft) {
+    selectedId.value = selected.id
+    draft.value = { ...blankProfile(), ...selected }
+  } else if (!selected && screen.value === 'editor' && !keepDraft) {
+    createProfile()
+  }
+}
+
+async function refreshSharedState() {
+  if (syncing || busy.value || !nativeConnected.value || document.visibilityState !== 'visible') return
+  syncing = true
+  try {
+    await loadData(undefined, true)
+  } catch {
+    // The bridge connection listener reports host failures; a later poll retries.
+  } finally {
+    syncing = false
   }
 }
 
@@ -358,6 +382,7 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', handleVisibilityChange)
   await detectInstallPlatform()
   await detectNativeHost()
+  syncTimer = window.setInterval(refreshSharedState, 1500)
 })
 
 onBeforeUnmount(() => {
@@ -366,6 +391,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('focus', handlePanelFocus)
   document.removeEventListener('visibilitychange', handleVisibilityChange)
   if (noticeTimer) window.clearTimeout(noticeTimer)
+  if (syncTimer) window.clearInterval(syncTimer)
 })
 </script>
 

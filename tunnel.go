@@ -28,6 +28,7 @@ type TunnelManager struct {
 	mu             sync.RWMutex
 	hostKeyMu      sync.Mutex
 	tunnels        map[string]*runningTunnel
+	statuses       map[string]TunnelStatus
 	pendingHostKey map[string]pendingHostKey
 	knownHostsPath string
 	emit           func(TunnelStatus)
@@ -51,6 +52,7 @@ type runningTunnel struct {
 func NewTunnelManager(knownHostsPath string, emit func(TunnelStatus)) *TunnelManager {
 	return &TunnelManager{
 		tunnels:        make(map[string]*runningTunnel),
+		statuses:       make(map[string]TunnelStatus),
 		pendingHostKey: make(map[string]pendingHostKey),
 		knownHostsPath: knownHostsPath,
 		emit:           emit,
@@ -162,11 +164,30 @@ func (m *TunnelManager) StopAll() {
 func (m *TunnelManager) Status(profile TunnelProfile) TunnelStatus {
 	m.mu.RLock()
 	tunnel := m.tunnels[profile.ID]
+	status, hasStatus := m.statuses[profile.ID]
 	m.mu.RUnlock()
 	if tunnel == nil {
+		if hasStatus {
+			return status
+		}
 		return stoppedStatus(profile)
 	}
 	return *tunnel.statusCopy()
+}
+
+func (m *TunnelManager) Reset(profile TunnelProfile) {
+	m.mu.Lock()
+	delete(m.pendingHostKey, profile.ID)
+	m.mu.Unlock()
+	m.emitStatus(stoppedStatus(profile))
+}
+
+func (m *TunnelManager) Forget(profile TunnelProfile) {
+	_ = m.Stop(profile)
+	m.mu.Lock()
+	delete(m.pendingHostKey, profile.ID)
+	delete(m.statuses, profile.ID)
+	m.mu.Unlock()
 }
 
 func (m *TunnelManager) IsRunning(profileID string) bool {
@@ -500,6 +521,9 @@ func (t *runningTunnel) publish() {
 }
 
 func (m *TunnelManager) emitStatus(status TunnelStatus) {
+	m.mu.Lock()
+	m.statuses[status.ProfileID] = status
+	m.mu.Unlock()
 	if m.emit != nil {
 		m.emit(status)
 	}

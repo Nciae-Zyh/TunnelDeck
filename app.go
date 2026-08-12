@@ -11,13 +11,18 @@ import (
 )
 
 type App struct {
-	ctx        context.Context
-	mu         sync.RWMutex
-	store      *ConfigStore
-	secrets    SecretStore
-	manager    *TunnelManager
-	profiles   []TunnelProfile
-	startupErr error
+	ctx           context.Context
+	mu            sync.RWMutex
+	coordinatorMu sync.Mutex
+	store         *ConfigStore
+	secrets       SecretStore
+	manager       *TunnelManager
+	managerEmit   func(TunnelStatus)
+	runtimeReady  bool
+	coordinator   *runtimeCoordinator
+	remote        *runtimeClient
+	profiles      []TunnelProfile
+	startupErr    error
 }
 
 func NewApp() *App {
@@ -39,30 +44,50 @@ func (a *App) startup(ctx context.Context) {
 	a.initializeManager(func(status TunnelStatus) {
 		runtime.EventsEmit(a.ctx, "tunnel:status", status)
 	})
+	if err := a.coordinateRuntime(); err != nil {
+		a.mu.Lock()
+		a.startupErr = err
+		a.mu.Unlock()
+	}
 }
 
 func (a *App) initializeManager(emit func(TunnelStatus)) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.managerEmit = emit
+	a.runtimeReady = true
 	if a.store != nil {
 		a.manager = NewTunnelManager(a.store.knownHostsPath, emit)
 	}
 }
 
 func (a *App) shutdown(_ context.Context) {
-	if a.manager != nil {
-		a.manager.StopAll()
+	manager := a.tunnelManager()
+	if manager != nil {
+		manager.StopAll()
 	}
+	a.closeRuntimeCoordinator()
 }
 
 func (a *App) Bootstrap() BootstrapData {
+	var remote BootstrapData
+	if handled, responseErr := a.invokeRemote("bootstrap", nil, &remote); handled {
+		if responseErr != nil {
+			remote.StartupError = responseErr.Message
+		}
+		return remote
+	}
 	a.mu.RLock()
 	profiles := append([]TunnelProfile(nil), a.profiles...)
+	manager := a.manager
+	startupErr := a.startupErr
 	a.mu.RUnlock()
 	views := make([]ProfileView, 0, len(profiles))
 	statuses := make([]TunnelStatus, 0, len(profiles))
 	for _, profile := range profiles {
 		views = append(views, ProfileView{TunnelProfile: profile, HasStoredSecret: profile.RememberSecret})
-		if a.manager != nil {
-			statuses = append(statuses, a.manager.Status(profile))
+		if manager != nil {
+			statuses = append(statuses, manager.Status(profile))
 		} else {
 			statuses = append(statuses, stoppedStatus(profile))
 		}
@@ -72,13 +97,16 @@ func (a *App) Bootstrap() BootstrapData {
 		result.ConfigPath = a.store.configPath
 		result.KnownHostsPath = a.store.knownHostsPath
 	}
-	if a.startupErr != nil {
-		result.StartupError = a.startupErr.Error()
+	if startupErr != nil {
+		result.StartupError = startupErr.Error()
 	}
 	return result
 }
 
 func (a *App) SaveProfile(request SaveProfileRequest) OperationResult {
+	if result, handled := a.remoteOperation("saveProfile", request); handled {
+		return result
+	}
 	if a.store == nil {
 		return failedResult("STORE_UNAVAILABLE", "配置存储不可用")
 	}
@@ -93,7 +121,8 @@ func (a *App) SaveProfile(request SaveProfileRequest) OperationResult {
 	if err := validateProfile(profile); err != nil {
 		return failedResult("VALIDATION_FAILED", err.Error())
 	}
-	if profile.ID != "" && a.manager != nil && a.manager.IsRunning(profile.ID) {
+	manager := a.tunnelManager()
+	if profile.ID != "" && manager != nil && manager.IsRunning(profile.ID) {
 		return failedResult("PROFILE_RUNNING", "请先停止隧道，再修改配置")
 	}
 
@@ -113,10 +142,17 @@ func (a *App) SaveProfile(request SaveProfileRequest) OperationResult {
 		}
 		profile.ID = id
 		profile.CreatedAt = nowRFC3339()
+	} else if index < 0 {
+		a.mu.Unlock()
+		return failedResult("PROFILE_CONFLICT", "配置已在另一个窗口删除，请返回列表后重新创建")
 	}
 	profile.UpdatedAt = nowRFC3339()
 	profilesCopy := append([]TunnelProfile(nil), a.profiles...)
 	if index >= 0 {
+		if request.Profile.UpdatedAt != a.profiles[index].UpdatedAt {
+			a.mu.Unlock()
+			return failedResult("PROFILE_CONFLICT", "配置已在另一个窗口更新，请重新选择后再修改")
+		}
 		profile.CreatedAt = a.profiles[index].CreatedAt
 		profilesCopy[index] = profile
 	} else {
@@ -128,6 +164,9 @@ func (a *App) SaveProfile(request SaveProfileRequest) OperationResult {
 	}
 	a.profiles = profilesCopy
 	a.mu.Unlock()
+	if manager != nil {
+		manager.Reset(profile)
+	}
 	if profile.RememberSecret && request.Secret != "" {
 		if err := a.secrets.Set(profile.ID, request.Secret); err != nil {
 			return OperationResult{OK: false, Code: "KEYRING_SAVE_FAILED", Message: "配置已保存，但系统钥匙串写入失败: " + err.Error(), Profile: &profile}
@@ -141,6 +180,9 @@ func (a *App) SaveProfile(request SaveProfileRequest) OperationResult {
 }
 
 func (a *App) DeleteProfile(profileID string) OperationResult {
+	if result, handled := a.remoteOperation("deleteProfile", map[string]string{"profileId": profileID}); handled {
+		return result
+	}
 	profile, ok := a.findProfile(profileID)
 	if !ok {
 		return failedResult("NOT_FOUND", "配置不存在")
@@ -159,8 +201,8 @@ func (a *App) DeleteProfile(profileID string) OperationResult {
 	}
 	a.profiles = profiles
 	a.mu.Unlock()
-	if a.manager != nil {
-		a.manager.Stop(profile)
+	if manager := a.tunnelManager(); manager != nil {
+		manager.Forget(profile)
 	}
 	if err := a.secrets.Delete(profileID); err != nil {
 		return failedResult("KEYRING_DELETE_FAILED", "配置已删除，但钥匙串凭据删除失败: "+err.Error())
@@ -169,6 +211,9 @@ func (a *App) DeleteProfile(profileID string) OperationResult {
 }
 
 func (a *App) StartTunnel(request StartTunnelRequest) OperationResult {
+	if result, handled := a.remoteOperation("startTunnel", request); handled {
+		return result
+	}
 	profile, ok := a.findProfile(request.ProfileID)
 	if !ok {
 		return failedResult("NOT_FOUND", "请先保存配置")
@@ -183,29 +228,38 @@ func (a *App) StartTunnel(request StartTunnelRequest) OperationResult {
 	if profile.AuthMode == AuthPassword && secret == "" {
 		return failedResult("SECRET_REQUIRED", "请输入 SSH 密码")
 	}
-	if a.manager == nil {
+	manager := a.tunnelManager()
+	if manager == nil {
 		return failedResult("MANAGER_UNAVAILABLE", "隧道管理器尚未初始化")
 	}
-	return a.manager.Start(profile, secret)
+	return manager.Start(profile, secret)
 }
 
 func (a *App) StopTunnel(profileID string) OperationResult {
+	if result, handled := a.remoteOperation("stopTunnel", map[string]string{"profileId": profileID}); handled {
+		return result
+	}
 	profile, ok := a.findProfile(profileID)
 	if !ok {
 		return failedResult("NOT_FOUND", "配置不存在")
 	}
-	if a.manager == nil {
+	manager := a.tunnelManager()
+	if manager == nil {
 		return failedResult("MANAGER_UNAVAILABLE", "隧道管理器尚未初始化")
 	}
-	return a.manager.Stop(profile)
+	return manager.Stop(profile)
 }
 
 func (a *App) BrowserURL(profileID string) OperationResult {
+	if result, handled := a.remoteOperation("browserURL", map[string]string{"profileId": profileID}); handled {
+		return result
+	}
 	profile, ok := a.findProfile(profileID)
 	if !ok {
 		return failedResult("NOT_FOUND", "配置不存在")
 	}
-	if a.manager == nil || !a.manager.IsRunning(profileID) {
+	manager := a.tunnelManager()
+	if manager == nil || !manager.IsRunning(profileID) {
 		return failedResult("TUNNEL_NOT_RUNNING", "请先启动隧道")
 	}
 	target, err := profile.browserURL()
@@ -233,14 +287,18 @@ func (a *App) RegisterNativeHost(extensionID string) NativeHostRegistrationResul
 }
 
 func (a *App) TrustHost(profileID string) OperationResult {
+	if result, handled := a.remoteOperation("trustHost", map[string]string{"profileId": profileID}); handled {
+		return result
+	}
 	profile, ok := a.findProfile(profileID)
 	if !ok {
 		return failedResult("NOT_FOUND", "配置不存在")
 	}
-	if a.manager == nil {
+	manager := a.tunnelManager()
+	if manager == nil {
 		return failedResult("MANAGER_UNAVAILABLE", "隧道管理器尚未初始化")
 	}
-	return a.manager.TrustHost(profile)
+	return manager.TrustHost(profile)
 }
 
 func (a *App) ParseSSHCommand(command string) ParseCommandResult {
@@ -289,6 +347,12 @@ func (a *App) findProfile(profileID string) (TunnelProfile, bool) {
 		}
 	}
 	return TunnelProfile{}, false
+}
+
+func (a *App) tunnelManager() *TunnelManager {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return a.manager
 }
 
 func (a *App) ExportSafeConfig() string {
