@@ -23,7 +23,7 @@ ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com
 - SSH keepalive、断线自动重连和 2–30 秒指数退避
 - 默认只监听 `127.0.0.1`；主动绑定 `0.0.0.0` 或 `::` 时显示暴露风险提示
 - 可将 HTTP/HTTPS 隧道标记为网页服务，连接后由用户主动点击打开
-- Chrome 侧边栏扩展，共用桌面端配置和系统钥匙串
+- Chrome 侧边栏扩展，与桌面端共享配置、隧道进程、运行状态和系统钥匙串
 - macOS Apple Silicon、Windows AMD64、Linux AMD64
 
 ## 为什么比较轻
@@ -60,19 +60,19 @@ ssh -L 9108:127.0.0.1:9108 -p 33899 root@ssh.example.com
 当前阶段不提供未签名的桌面二进制或安装器。macOS/Linux 可以像 nvm 一样用一条命令检查依赖、下载固定源码标签并在本机完成构建：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.3/install.sh | sh
 ```
 
 没有 `curl` 时可以使用 `wget`：
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh
+wget -qO- https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.3/install.sh | sh
 ```
 
 Windows PowerShell 使用：
 
 ```powershell
-irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.ps1 | iex
+irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.3/install.ps1 | iex
 ```
 
 安装器先报告操作系统、架构、下载与校验工具、Go、Node.js 和平台构建库。已有 Go 1.25+/Node.js 20+ 会直接复用；缺失时下载到 TunnelDeck 私有用户目录并校验官方 SHA-256，不修改全局 PATH。macOS 的 Xcode Command Line Tools、Linux 的 GTK3/WebKitGTK 4.1 和 Windows 的 WebView2 会在构建前检查。
@@ -80,7 +80,7 @@ irm https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.ps1 | 
 只检测、不安装：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install.sh | sh -s -- --check
+curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.3/install.sh | sh -s -- --check
 ```
 
 脚本在用户电脑上构建桌面应用；从 Chrome Web Store 安装扩展后，将正式商店 ID 传给安装器即可同时注册 Native Messaging。完整依赖、手动审查方式、开发扩展加载和更新步骤见 [源码安装指南](docs/SOURCE_INSTALL.md)。
@@ -92,6 +92,8 @@ curl -fsSL https://raw.githubusercontent.com/Nciae-Zyh/TunnelDeck/v0.3.2/install
 普通用户先按上面的“安装”章节部署桌面端，再从 Chrome Web Store 安装扩展。一行安装器会默认注册正式商店 ID `jnfkjehpbkmfnidfcilehhkpbjjinmod`；如果先安装了桌面端，也可以在底部“Chrome 浏览器集成”中点击“一键注册商店扩展”。
 
 侧边栏打开时会通过 Native Messaging 握手判断桌面端是否已正确安装和注册。无法连接时，扩展会按 macOS、Windows、Linux 显示固定版本安装命令、完整安装指南和“重新检测”按钮；从安装窗口返回 Chrome 时也会自动复检。检测只尝试连接声明的 `com.tunneldeck.native`，不会扫描文件、读取浏览记录或申请额外网站权限。
+
+桌面窗口和 Chrome 扩展通过仅绑定 `127.0.0.1` 的本地协调器操作同一个隧道实例，并每 1.5 秒同步配置与状态。协调器使用随机端口、每次启动生成的随机令牌和权限为 `0600` 的描述文件；不会监听局域网地址。两个界面同时打开时，从任一端启动或停止隧道都会反映到另一端；编辑中的表单不会被后台刷新覆盖。同一配置若已在另一端保存，旧表单会收到冲突提示，需要重新选择后再编辑，以免覆盖较新的内容。
 
 网页快捷入口遵循和桌面端相同的规则：
 
@@ -173,6 +175,7 @@ Chrome Web Store 发布、macOS 公证、Windows 签名和 Native Host 注册的
 - “记住凭据”是显式选择，不是默认行为。
 - 应用退出或停止隧道时关闭监听器、SSH 连接并清空该隧道持有的内存凭据。
 - TunnelDeck 不能替代服务器侧最小权限、SSH 防火墙、密钥轮换或 MFA。
+- 桌面端与扩展的同步服务只监听本机回环地址，并要求随机令牌；`runtime.json` 仅保存临时回环地址、进程号和令牌，不包含 SSH 密码或私钥内容。
 
 ## 技术栈
 
@@ -182,6 +185,7 @@ Chrome Web Store 发布、macOS 公证、Windows 签名和 Native Host 注册的
 - Vite
 - `golang.org/x/crypto/ssh`
 - `github.com/zalando/go-keyring`
+- `github.com/gofrs/flock`
 
 ## License
 

@@ -14,7 +14,7 @@ import type {
 type Screen = 'profiles' | 'editor'
 type InstallPlatform = 'macos' | 'linux' | 'windows' | 'other'
 
-const releaseVersion = 'v0.3.2'
+const releaseVersion = 'v0.3.3'
 const repositoryUrl = 'https://github.com/Nciae-Zyh/TunnelDeck'
 const installGuideUrl = `${repositoryUrl}/blob/${releaseVersion}/docs/SOURCE_INSTALL.md`
 const installCommands: Record<Exclude<InstallPlatform, 'other'>, string> = {
