@@ -1,6 +1,6 @@
 module TunnelDeck
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/gofrs/flock v0.13.0
@@ -8,7 +8,7 @@ require (
 	github.com/wailsapp/wails/v2 v2.13.0
 	github.com/zalando/go-keyring v0.2.8
 	golang.org/x/crypto v0.54.0
-	golang.org/x/sys v0.47.0
+	golang.org/x/sys v0.48.0
 )
 
 require (
